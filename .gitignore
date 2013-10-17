@@ -3,6 +3,10 @@
 # C extensions
 *.so
 
+# Vim swap and backup files
+*.swp
+*.*~
+
 # Packages
 *.egg
 *.egg-info
@@ -33,3 +37,6 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# Python notebooks
+.ipynb_checkpoints
