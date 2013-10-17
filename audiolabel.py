@@ -3,7 +3,7 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.1
+@version: 0.1.1
 l """
 
 import numpy as np
@@ -202,11 +202,6 @@ from an iterable."""
             return self._list[-1]
         except:
             return None
-
-# Not needed. This class already has an iter() that returns the labels.
-#    def labels(self):
-#        """Return the ordered list of all Label objects."""
-#        return [self._list]
 
     def labelAt(self, time, method='closest'):
         """Return the label occurring at a particular time."""
@@ -517,7 +512,8 @@ or the tier name."""
 guessed if not specified."""
         if fmt == None:
             with open(filename, 'rb') as f:
-                firstline = f.readline().strip()
+                # decode() is will remove the BOM, if present.
+                firstline = f.readline().decode('utf-8-sig').strip()
                 if re.match('File type = "ooTextFile"', firstline):
                     fmt = 'praat_long'
                 elif re.match('File type = "ooTextFile short"', firstline):
@@ -531,7 +527,7 @@ guessed if not specified."""
         
     def readPraatShort(self, filename):
         with open(filename, 'rb') as f:
-            firstline = f.readline()
+            firstline = f.readline().decode('utf-8-sig').strip()
             if not re.match(r'File type = "ooTextFile short"', firstline):
                 raise LabelManagerReadError("Could not read Praat short text grid.")
             # Read in header lines.
@@ -603,7 +599,7 @@ guessed if not specified."""
 
     def readPraatLong(self, filename):
         with open(filename, 'rb') as f:
-            firstline = f.readline()
+            firstline = f.readline().decode('utf-8-sig').strip()
             if not re.match(r'File type = "ooTextFile"', firstline):
                 raise LabelManagerReadError("Could not read Praat long text grid.")
 
@@ -815,4 +811,5 @@ if __name__ == '__main__':
 #    lm5.readWavesurfer(samplefile)
 #
 #    a = 1
+    lm = LabelManager(fromFile='test/ipa.TextGrid', fromType='praat')
     pass

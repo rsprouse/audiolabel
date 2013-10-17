@@ -1,5 +1,8 @@
 Change history for audiolabel
 
+Version 0.1.1: 20131017
+- Added decode() to reading of first line in Praat TextGrids to remove BOM, if present.
+
 Version 0.1: 20131017
 - Added @version line to header comments.
 - Added ipython-notebook-compatible _repr_ methods.
