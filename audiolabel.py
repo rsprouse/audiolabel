@@ -2,7 +2,8 @@
 """
 Created on Fri May 10 13:29:26 2013
 
-@author: Ronald Sprouse (ronald@berkeley.edu)
+@author: Ronald L. Sprouse (ronald@berkeley.edu)
+@version: 0.1
 l """
 
 import numpy as np
@@ -68,7 +69,15 @@ class Label(object):
             t2str = ''
         else:
             t2str = "t2={t2:0.4f}, ".format(t2=self._t2)
-        return "Label(t1={t1:0.4f}, {t2}text='{text}')".format(t1=self._t1,t2=t2str,text=self.text)
+        return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(t1=self._t1,t2=t2str,text=self.text)
+
+    def _repr_html_(self):
+	"""Output for ipython notebook."""
+        if self._t2 == None:
+            t2str = ''
+        else:
+            t2str = "<b>t2</b>={t2:0.4f}, ".format(t2=self._t2)
+        return "<b>Label</b>( <b>t1</b>={t1:0.4f}, {t2}<b>text</b>='{text}' )".format(t1=self._t1,t2=t2str,text=self.text)
 
     def _scaleBy(self, factor):
         self._t1 *= factor
@@ -121,6 +130,19 @@ class _LabelTier(collections.MutableSet):
     def __repr__(self):
         s = "[" + ",".join(repr(l) for l in self._list) + "]"
         return s
+
+    def _repr_html_(self):
+	"""Output for ipython notebook."""
+        s = "<ul>[<li>"
+	if len(self._list) > 10:
+            s += "</li><li>".join(self._list[n]._repr_html_() for n in range(5))
+	    s += "</li><li>...</li><li>"
+            s += "</li><li>".join(self._list[n]._repr_html_() for n in range(-5,0))
+	else:
+            s += "</li><li>".join(l._repr_html_() for l in self._list)
+	s += "</li>]</ul>"
+        return s
+
 
 #### Methods required by abstract base class ####
 
@@ -263,8 +285,14 @@ class PointTier(_LabelTier):
 
     def __repr__(self):
         s = "PointTier("
-        s += super(PointTier, self).repr()
+        s += super(PointTier, self).__repr__()
         return s + ")\n"
+
+    def _repr_html_(self):
+	"""Output for ipython notebook."""
+        s = "<p><b>PointTier</b>( "
+        s += super(PointTier, self)._repr_html_()
+        return s + " )</p>"
 
 class IntervalTier(_LabelTier):
     """A manager of interval Label objects"""
@@ -276,6 +304,12 @@ class IntervalTier(_LabelTier):
         s = "IntervalTier("
         s += super(IntervalTier, self).__repr__()
         return s + ")\n"
+
+    def _repr_html_(self):
+	"""Output for ipython notebook."""
+        s = "<p><b>IntervalTier</b>( "
+        s += super(IntervalTier, self)._repr_html_()
+        return s + " )</p>"
 
     def tslice(self, t1, t2=None, tol=0.0, ltol=0.0, rtol=0.0, lincl=True, \
                rincl=True, lstrip=False, rstrip=False):
@@ -354,6 +388,16 @@ class LabelManager(collections.MutableSet):
         else:
             s += "[]"
         return s + ")\n"
+        
+    def _repr_html_(self):
+	"""Output for ipython notebook."""
+        s = "<p><b>LabelManager</b>( <b>tiers</b>="
+        if len(self._tiers) > 0:
+            s += "[" + ",".join(str(n) for n in range(len(self._tiers))) + "]"
+            s += ", <b>names</b>=['" + "','".join([t.name for t in self._tiers]) + "']"
+        else:
+            s += "[]"
+        return s + " )<p>"
         
 #### Methods required by abstract base class ####
 
@@ -683,7 +727,7 @@ guessed if not specified."""
             for skip in range(skipN):
                 f.readline()
             if fieldsInHead:
-                fields = f.readline().rstrip('\n').split(sep)
+                fields = f.readline().rstrip().split(sep)
             else:
                 fields = [fld.strip() for fld in fields.split(',')]
             tiers = []

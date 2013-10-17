@@ -1,0 +1,7 @@
+Change history for audiolabel
+
+Version 0.1: 20131017
+- Added @version line to header comments.
+- Added ipython-notebook-compatible _repr_ methods.
+
+Unversioned: Initial checkin
