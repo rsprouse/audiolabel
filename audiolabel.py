@@ -3,7 +3,7 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.1.1
+@version: 0.1.2
 l """
 
 import numpy as np
@@ -507,28 +507,30 @@ or the tier name."""
         return labels
             
         
-    def readPraat(self, filename, fmt=None):
-        """Populate labels by reading in a Praat file. The format will be
-guessed if not specified."""
-        if fmt == None:
-            with open(filename, 'rb') as f:
-                # decode() is will remove the BOM, if present.
-                firstline = f.readline().decode('utf-8-sig').strip()
-                if re.match('File type = "ooTextFile"', firstline):
-                    fmt = 'praat_long'
-                elif re.match('File type = "ooTextFile short"', firstline):
-                    fmt = 'praat_short'
-        if fmt == 'praat_short':
-            self.readPraatShort(filename)
-        elif fmt == 'praat_long':
-            self.readPraatLong(filename)
-        else:
-            raise LabelManagerParseError("Could not determine Praat format.")
+    def readPraat(self, filename):
+        """Populate labels by reading in a Praat file. The short/long format will be
+guessed."""
+        with open(filename, 'rb') as f:
+            # decode() is will remove the BOM, if present.
+            firstline = f.readline().decode('utf-8-sig').strip()
+            if not re.match('File type = "ooTextFile"', firstline):
+                raise LabelManagerParseError("File does not appear to be a Praat format.")
+            f.readline()   # skip a line
+            f.readline()   # skip a line
+            xmin = f.readline()  # should be xmin = line
+            if re.match('xmin = \d', xmin):
+                f.close()
+                self.readPraatLong(filename)
+            elif re.match('\d', xmin):
+                f.close()
+                self.readPraatShort(filename)
+            else:
+                raise LabelManagerParseError("File does not appear to be a Praat format.")
         
     def readPraatShort(self, filename):
         with open(filename, 'rb') as f:
             firstline = f.readline().decode('utf-8-sig').strip()
-            if not re.match(r'File type = "ooTextFile short"', firstline):
+            if not re.match(r'File type = "ooTextFile"', firstline):
                 raise LabelManagerReadError("Could not read Praat short text grid.")
             # Read in header lines.
             # TODO: use header lines for error checking or processing hints? Current
@@ -547,9 +549,11 @@ guessed if not specified."""
                 line = f.readline()
                 if line == '': break   # Reached EOF.
                 line = line.strip()
+
+
                 if line == '': continue # Empty line.
                 # Start a new tier.
-                if line == '"IntervalTier"' or line == '"Tier1"':
+                if line == '"IntervalTier"' or line == '"TextTier"':
                     if tier != None: self.add(tier)
                     tname = re.sub('^"|"$', '', f.readline().strip())
                     tstart = f.readline()
@@ -566,6 +570,7 @@ guessed if not specified."""
                     if isinstance(tier, IntervalTier):
                         t2 = f.readline()
                     else:
+
                         t2 = None
                     lab = Label(
                                 t1=line,
@@ -810,6 +815,6 @@ if __name__ == '__main__':
 #    lm5 = LabelManager()
 #    lm5.readWavesurfer(samplefile)
 #
-#    a = 1
-    lm = LabelManager(fromFile='test/ipa.TextGrid', fromType='praat')
+    a = 1
+    lm = LabelManager(fromFile='test/this_is_a_label_file.short.TextGrid', fromType='praat')
     pass
