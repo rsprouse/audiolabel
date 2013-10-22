@@ -1,5 +1,8 @@
 Change history for audiolabel
 
+Version 0.1.4: 20131022
+- Switched to codecs module for BOM detection.
+
 Version 0.1.3: 20131022
 - Improved BOM detection for better support of utf_8, utf_16_be, and utf_16_le, but still needs work.
 

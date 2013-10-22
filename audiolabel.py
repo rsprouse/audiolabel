@@ -3,10 +3,11 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.1.3
+@version: 0.1.4
 l """
 
 import numpy as np
+import codecs
 import collections
 import copy
 import re
@@ -17,20 +18,6 @@ import logging
 # Strip white space at edges, remove surrounding quotes, and unescape quotes.
 def _cleanPraatString(s):
     return re.sub('""', '"', re.sub('^"|"$', '', s.strip()))
-
-def _guessEncodingFromBOM(filename):
-    '''Guess and return the encoding of a file from the BOM. Limited to 'utf_8',
-'utf_16_be', and 'utf_16_le'. Assume 'ascii' if no BOM.'''
-    codec = 'ascii'   # Default.
-    with open(filename, 'rb') as f:
-        firstline = f.readline()
-        if re.compile('^\xEF\xBB\xBF').search(firstline):
-            codec = 'utf_8'
-        elif re.compile('^\xFE\xFF').search(firstline):
-            codec = 'utf_16_be'
-        elif re.compile('^\xFF\xFE').search(firstline):
-            codec = 'utf_16_le'
-    return codec
 
 class LabelError(Exception):
     """Base class for errors in this module."""
@@ -521,20 +508,26 @@ or the tier name."""
         return labels
             
         
+    def _guessPraatEncoding(self, firstline):
+        '''Guess and return the encoding of a file from the BOM. Limited to 'utf_8',
+'utf_16_be', and 'utf_16_le'. Assume 'ascii' if no BOM.'''
+        if firstline.startswith(codecs.BOM_UTF16_LE):
+            codec = 'utf_16_le'
+        elif firstline.startswith(codecs.BOM_UTF16_BE):
+            codec = 'utf_16_be'
+        elif firstline.startswith(codecs.BOM_UTF8):
+            codec = 'utf_8'
+        else:
+            codec = 'ascii'
+        return codec
+
     def readPraat(self, filename, codec=None):
         """Populate labels by reading in a Praat file. The short/long format will be
 guessed."""
-        if codec == None:
-            codec = _guessEncodingFromBOM(filename)
         with open(filename, 'rb') as f:
-            dec = codec
-            if codec == 'utf_8':
-                dec = 'utf-8-sig'
-            else:
-                dec = re.compile('_[bl]e$').sub('', dec)
-            firstline = f.readline().decode(dec).strip()
-            if not re.match('File type = "ooTextFile"', firstline):
-                raise LabelManagerParseError("File does not appear to be a Praat format.")
+            firstline = f.readline()
+            if codec == None:
+                codec = self._guessPraatEncoding(firstline)
             f.readline()   # skip a line
             f.readline()   # skip a line
             xmin = f.readline().decode(codec)  # should be xmin = line
@@ -548,17 +541,10 @@ guessed."""
                 raise LabelManagerParseError("File does not appear to be a Praat format.")
         
     def readPraatShort(self, filename, codec=None):
-        if codec == None:
-            codec = _guessEncodingFromBOM(filename)
         with open(filename, 'rb') as f:
-            dec = codec
-            if codec == 'utf_8':
-                dec = 'utf-8-sig'
-            else:
-                dec = re.compile('_[bl]e$').sub('', dec)
-            firstline = f.readline().strip().decode(dec)
-            if not re.match(r'File type = "ooTextFile"', firstline):
-                raise LabelManagerReadError("Could not read Praat short text grid.")
+            firstline = f.readline()
+            if codec == None:
+                codec = self._guessPraatEncoding(firstline)
             # Read in header lines.
             # TODO: use header lines for error checking or processing hints? Current
             # implementation ignores their content.
@@ -573,7 +559,7 @@ guessed."""
             # readline() calls in the loop.
             tier = None
             while True:
-                line = f.readline()
+                line = f.readline().decode(codec)
                 if line == '': break   # Reached EOF.
                 line = line.strip()
 
@@ -583,9 +569,9 @@ guessed."""
                 if line == '"IntervalTier"' or line == '"TextTier"':
                     if tier != None: self.add(tier)
                     tname = re.sub('^"|"$', '', f.readline().strip())
-                    tstart = f.readline()
-                    tend = f.readline()
-                    numintvl = int(f.readline().strip())
+                    tstart = f.readline().decode(codec)
+                    tend = f.readline().decode(codec)
+                    numintvl = int(f.readline().decode(codec).strip())
                     if line == '"IntervalTier"':
                         tier = IntervalTier(start=tstart, end=tend, \
                                                  name=tname, numlabels=numintvl)
@@ -595,7 +581,7 @@ guessed."""
                 # Add a label to existing tier.
                 else:
                     if isinstance(tier, IntervalTier):
-                        t2 = f.readline()
+                        t2 = f.readline().decode(codec)
                     else:
 
                         t2 = None
@@ -631,18 +617,10 @@ guessed."""
         return tier
 
     def readPraatLong(self, filename, codec=None):
-        if codec == None:
-            codec = _guessEncodingFromBOM(filename)
         with open(filename, 'rb') as f:
-            dec = codec
-            if codec == 'utf_8':
-                dec = 'utf-8-sig'
-            else:
-                dec = re.compile('_[bl]e$').sub('', dec)
-            firstline = f.readline().decode(dec).strip()
-            if not re.match(r'File type = "ooTextFile"', firstline):
-                raise LabelManagerReadError("Could not read Praat long text grid.")
-
+            firstline = f.readline()
+            if codec == None:
+                codec = self._guessPraatEncoding(firstline)
             # Regexes to match line containing t1, t2, label text, and label end.
             # TODO: use named captures
             t1_re = re.compile("(?:xmin|number) = ([^\s]+)")
@@ -682,7 +660,7 @@ guessed."""
                 grabbing_text = True
                 while grabbing_text:
                     loc = f.tell()
-                    line = f.readline()
+                    line = f.readline().decode(codec)
                     if not (end_label_re.search(line) or line == ''):
                         text += line
                     else:
@@ -851,5 +829,6 @@ if __name__ == '__main__':
 #    lm5 = LabelManager()
 #    lm5.readWavesurfer(samplefile)
 #
-    lm = LabelManager(fromFile='test/Turkmen_NA_20130919_G_3.TextGrid', fromType='praat')
+    lm = LabelManager(fromFile='test/ipa.TextGrid', fromType='praat')
+#    lm = LabelManager(fromFile='test/Turkmen_NA_20130919_G_3.TextGrid', fromType='praat')
     pass
