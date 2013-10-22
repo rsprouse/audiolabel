@@ -1,5 +1,8 @@
 Change history for audiolabel
 
+Version 0.1.3: 20131022
+- Improved BOM detection for better support of utf_8, utf_16_be, and utf_16_le, but still needs work.
+
 Version 0.1.2: 20131017
 - Removed fmt parameter from readPraat().
 - Fixed errors in detection and parsing of Praat short format.

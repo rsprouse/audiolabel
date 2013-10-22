@@ -3,7 +3,7 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.1.2
+@version: 0.1.3
 l """
 
 import numpy as np
@@ -18,6 +18,19 @@ import logging
 def _cleanPraatString(s):
     return re.sub('""', '"', re.sub('^"|"$', '', s.strip()))
 
+def _guessEncodingFromBOM(filename):
+    '''Guess and return the encoding of a file from the BOM. Limited to 'utf_8',
+'utf_16_be', and 'utf_16_le'. Assume 'ascii' if no BOM.'''
+    codec = 'ascii'   # Default.
+    with open(filename, 'rb') as f:
+        firstline = f.readline()
+        if re.compile('^\xEF\xBB\xBF').search(firstline):
+            codec = 'utf_8'
+        elif re.compile('^\xFE\xFF').search(firstline):
+            codec = 'utf_16_be'
+        elif re.compile('^\xFF\xFE').search(firstline):
+            codec = 'utf_16_le'
+    return codec
 
 class LabelError(Exception):
     """Base class for errors in this module."""
@@ -51,7 +64,7 @@ class Label(object):
     """An individual annotation."""
     
     def __init__(self, t1, t2=None, text='', appdata=None, metadata=None,
-                 *args, **kwargs):
+                 codec='utf_8', *args, **kwargs):
         super(Label, self).__init__()
         if t1 == None:
             raise LabelTimeValueError('Missing t1 argument in __init__().')
@@ -61,6 +74,7 @@ class Label(object):
         else:
              self._t2 = float(t2)
         self.text = text
+        self._codec = codec
         self.appdata = appdata     # Container for app-specific data not used
                                    # by this class.
         
@@ -69,7 +83,7 @@ class Label(object):
             t2str = ''
         else:
             t2str = "t2={t2:0.4f}, ".format(t2=self._t2)
-        return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(t1=self._t1,t2=t2str,text=self.text)
+        return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(t1=self._t1,t2=t2str,text=self.text.encode(self._codec))
 
     def _repr_html_(self):
 	"""Output for ipython notebook."""
@@ -224,12 +238,12 @@ from an iterable."""
         if returnMatch:
             return [(l,m) \
                     for l in labels \
-                    for m in [pattern.search(l.text)] \
+                    for m in [pattern.search(l.text.encode(l._codec))] \
                     if m]
         else:
             return [l \
                     for l in labels \
-                    if pattern.search(l.text)]
+                    if pattern.search(l.text.encode(l._codec))]
         
 
     def tslice(self, t1, t2=None, tol=0.0, ltol=0.0, rtol=0.0, lincl=True, \
@@ -507,29 +521,42 @@ or the tier name."""
         return labels
             
         
-    def readPraat(self, filename):
+    def readPraat(self, filename, codec=None):
         """Populate labels by reading in a Praat file. The short/long format will be
 guessed."""
+        if codec == None:
+            codec = _guessEncodingFromBOM(filename)
         with open(filename, 'rb') as f:
-            # decode() is will remove the BOM, if present.
-            firstline = f.readline().decode('utf-8-sig').strip()
+            dec = codec
+            if codec == 'utf_8':
+                dec = 'utf-8-sig'
+            else:
+                dec = re.compile('_[bl]e$').sub('', dec)
+            firstline = f.readline().decode(dec).strip()
             if not re.match('File type = "ooTextFile"', firstline):
                 raise LabelManagerParseError("File does not appear to be a Praat format.")
             f.readline()   # skip a line
             f.readline()   # skip a line
-            xmin = f.readline()  # should be xmin = line
+            xmin = f.readline().decode(codec)  # should be xmin = line
             if re.match('xmin = \d', xmin):
                 f.close()
-                self.readPraatLong(filename)
+                self.readPraatLong(filename, codec=codec)
             elif re.match('\d', xmin):
                 f.close()
-                self.readPraatShort(filename)
+                self.readPraatShort(filename, codec=codec)
             else:
                 raise LabelManagerParseError("File does not appear to be a Praat format.")
         
-    def readPraatShort(self, filename):
+    def readPraatShort(self, filename, codec=None):
+        if codec == None:
+            codec = _guessEncodingFromBOM(filename)
         with open(filename, 'rb') as f:
-            firstline = f.readline().decode('utf-8-sig').strip()
+            dec = codec
+            if codec == 'utf_8':
+                dec = 'utf-8-sig'
+            else:
+                dec = re.compile('_[bl]e$').sub('', dec)
+            firstline = f.readline().strip().decode(dec)
             if not re.match(r'File type = "ooTextFile"', firstline):
                 raise LabelManagerReadError("Could not read Praat short text grid.")
             # Read in header lines.
@@ -575,24 +602,25 @@ guessed."""
                     lab = Label(
                                 t1=line,
                                 t2=t2,
-                                text=_cleanPraatString(f.readline())
+                                text=_cleanPraatString(f.readline().decode(codec)),
+                                codec=codec
                                )
                     tier.add(lab)
             if tier != None: self.add(tier)
 
     # Read the metadata section at the top of a tier in a praat_long file
     # referenced by f. Create a label tier from the metadata and return it.
-    def _readPraatLongTierMetadata(self,f):
+    def _readPraatLongTierMetadata(self, f, codec=None):
         d = dict(cls=None, tname=None, tstart=None, tend=None, numintvl=None)
-        m = re.compile("class = \"(.+)\"").search(f.readline())
+        m = re.compile("class = \"(.+)\"").search(f.readline().decode(codec))
         d['cls'] = m.group(1)
-        m = re.compile("name = \"(.+)\"").search(f.readline())
+        m = re.compile("name = \"(.+)\"").search(f.readline().decode(codec))
         d['tname'] = m.group(1)
-        m = re.compile("xmin = (\d+)").search(f.readline())
+        m = re.compile("xmin = (\d+)").search(f.readline().decode(codec))
         d['tstart'] = m.group(1)
-        m = re.compile("xmax = (\d+)").search(f.readline())
+        m = re.compile("xmax = (\d+)").search(f.readline().decode(codec))
         d['tend'] = m.group(1)
-        m = re.compile("(?:intervals|points): size = (\d+)").search(f.readline())
+        m = re.compile("(?:intervals|points): size = (\d+)").search(f.readline().decode(codec))
         d['numintvl'] = m.group(1)
         if d['cls'] == 'IntervalTier':
             tier = IntervalTier(start=d['tstart'], end=d['tend'], \
@@ -602,9 +630,16 @@ guessed."""
                                   name=d['tname'], numlabels=d['numintvl'])
         return tier
 
-    def readPraatLong(self, filename):
+    def readPraatLong(self, filename, codec=None):
+        if codec == None:
+            codec = _guessEncodingFromBOM(filename)
         with open(filename, 'rb') as f:
-            firstline = f.readline().decode('utf-8-sig').strip()
+            dec = codec
+            if codec == 'utf_8':
+                dec = 'utf-8-sig'
+            else:
+                dec = re.compile('_[bl]e$').sub('', dec)
+            firstline = f.readline().decode(dec).strip()
             if not re.match(r'File type = "ooTextFile"', firstline):
                 raise LabelManagerReadError("Could not read Praat long text grid.")
 
@@ -620,12 +655,12 @@ guessed."""
             # TODO: use header lines for error checking or processing hints? Current
             # implementation ignores their content.
             while True:
-                line = f.readline()
+                line = f.readline().decode(codec)
                 if item_re.search(line): break
                 # FIXME: better error
                 if line == '': raise Exception("Could not read file.")
             
-            tier = self._readPraatLongTierMetadata(f)
+            tier = self._readPraatLongTierMetadata(f, codec=codec)
             
             # Don't use 'for line in f' loop construct since we use multiple
             # readline() calls in the loop.
@@ -633,16 +668,16 @@ guessed."""
             t1 = t2 = text = None
             while grabbing_labels:
                 toss = f.readline()  # skip "intervals|points [n]:" line
-                t1line = f.readline()
+                t1line = f.readline().decode(codec)
                 #print t1line
                 m = t1_re.search(t1line)
                 t1 = float(m.group(1))
                 if isinstance(tier, IntervalTier):
-                    m = t2_re.search(f.readline())
+                    m = t2_re.search(f.readline().decode(codec))
                     t2 = float(m.group(1))
                 else:
                     t2 = None
-                m = text_re.search(f.readline())
+                m = text_re.search(f.readline().decode(codec))
                 text = m.group(1)
                 grabbing_text = True
                 while grabbing_text:
@@ -655,12 +690,13 @@ guessed."""
                         lab = Label(
                             t1=t1,
                             t2=t2,
-                            text=_cleanPraatString(text)
+                            text=_cleanPraatString(text),
+                            codec=codec
                         )
                         tier.add(lab)
                         if item_re.search(line):  # Start new tier.
                             self.add(tier)
-                            tier = self._readPraatLongTierMetadata(f)
+                            tier = self._readPraatLongTierMetadata(f, codec=codec)
                         elif line == '': # Reached EOF
                             self.add(tier)
                             grabbing_labels = False
@@ -815,6 +851,5 @@ if __name__ == '__main__':
 #    lm5 = LabelManager()
 #    lm5.readWavesurfer(samplefile)
 #
-    a = 1
-    lm = LabelManager(fromFile='test/this_is_a_label_file.short.TextGrid', fromType='praat')
+    lm = LabelManager(fromFile='test/Turkmen_NA_20130919_G_3.TextGrid', fromType='praat')
     pass
