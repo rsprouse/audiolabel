@@ -530,7 +530,7 @@ guessed."""
                 codec = self._guessPraatEncoding(firstline)
             f.readline()   # skip a line
             f.readline()   # skip a line
-            xmin = f.readline().decode(codec)  # should be xmin = line
+            xmin = f.readline().decode(codec)  # should be 'xmin = ' line
             if re.match('xmin = \d', xmin):
                 f.close()
                 self.readPraatLong(filename, codec=codec)
@@ -777,29 +777,6 @@ guessed."""
                 self.add(tier)
             
 
-# TODO: implement the ability to pass fields, separator, fpfmt as to match parameters used when calling ifcformant                           
-            # TODO: readIFCFormant is deprecated. Remove.
-    def readIFCFormant(self, filename, sep='\t'):
-        with open(filename, 'rb') as f:
-            t_rms = PointTier(name='rms')
-            t_f1 = PointTier(name='f1')
-            t_f2 = PointTier(name='f2')
-            t_f3 = PointTier(name='f3')
-            t_f4 = PointTier(name='f4')
-            t_f0 = PointTier(name='f0')
-            tiers = [t_rms, t_f1, t_f2, t_f3, t_f4, t_f0]
-            t = tstart = tend = None
-            for line in f.readlines():
-                fields = line.strip().split(sep)
-                t = fields.pop(0)
-                if tstart == None: tstart = t
-                for tier, fld in zip(tiers, fields):
-                    tier.add(Label(t1=t, text=fld))
-            tend = t
-            for tier in tiers:
-                tier.start = tstart
-                tier.end = tend
-                self.add(tier)
                 
 if __name__ == '__main__':
     # FIXME: Remove this when done developing.

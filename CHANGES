@@ -1,5 +1,8 @@
 Change history for audiolabel
 
+Version 0.1.5: 20131025
+- Removed readIFCFormant() method.
+
 Version 0.1.4: 20131022
 - Switched to codecs module for BOM detection.
 
