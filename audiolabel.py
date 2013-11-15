@@ -3,7 +3,7 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.1.4
+@version: 0.1.6
 l """
 
 import numpy as np
@@ -11,7 +11,7 @@ import codecs
 import collections
 import copy
 import re
-import logging
+#import logging
 
 # Some convenience functions to be used in the classes.
 
@@ -112,14 +112,15 @@ a point in time, return the point."""
             ctr = (self._t1 + self._t2) / 2.0
         return ctr
 
+
 class _LabelTier(collections.MutableSet):
     """A manager of (point) Label objects"""
     
     def __init__(self, start=0.0, end=float('inf'), name='', numlabels=None):
         super(_LabelTier, self).__init__()
         self.name = name
-        self.start = start
-        self.end = end
+        self.start = float(start)
+        self.end = float(end)
         self._list = []      # Container for Label objects.
         # Array of starting (t1) timepoints used for calculations.
         if numlabels == None:
@@ -274,6 +275,12 @@ from an iterable."""
         for item in self:
             item._shiftBy(t)
 
+    # TODO: come up with a good name and calling convention, then make 
+    # this a normal (non-hidden) method; change in subclasses too.
+    def _asString(self, fmt=None):
+        """Return the tier as a string of label file type fmt. To be implemented in a subclass."""
+        pass
+    
 class PointTier(_LabelTier):
     """A manager of (point) Label objects"""
     def __init__(self, start=0.0, end=float('inf'), name='', numlabels=None, *args, **kwargs):
@@ -285,11 +292,47 @@ class PointTier(_LabelTier):
         return s + ")\n"
 
     def _repr_html_(self):
-	"""Output for ipython notebook."""
+        """Output for ipython notebook."""
         s = "<p><b>PointTier</b>( "
         s += super(PointTier, self)._repr_html_()
         return s + " )</p>"
 
+    def _asString(self, fmt=None):
+        """Return the tier as a string of type fmt."""
+        if fmt == 'praat_long':
+            labels = [
+                '        class: "TextTier"',
+                '        name: "{:s}"'.format(self.name),
+                "        xmin: {:0.12f}".format(self.start),
+                "        xmax: {:0.12f}".format(self.end),
+                "        points: size = {:d}".format(len(self))
+            ]
+            for idx,lab in enumerate(self._list):
+                lab = '\n'.join((
+                    "        points [{:d}]:".format(idx+1),
+                    "            number = {:1.20f}".format(lab.t1()),
+                    '            mark = "{:s}"'.format(lab.text)
+                ))
+                labels.append(lab)
+            return '\n'.join(labels)
+        elif fmt == 'praat_short':
+            # TODO: implement
+            pass
+        elif fmt == 'esps':
+            # TODO: implement
+            pass
+        elif fmt == 'wavesurfer':
+            pass
+            # TODO: implement
+
+    def add(self, label):
+        """Add an annotation object."""
+        super(PointTier, self).add(label)
+        if self.end == np.Inf or label.t1() > self.end:
+            self.end = label.t1()
+            
+    # TODO: add discard() and adjust self.end?
+    
 class IntervalTier(_LabelTier):
     """A manager of interval Label objects"""
     def __init__(self, start=0.0, end=float('inf'), name='', numlabels=None, *args, **kwargs):
@@ -307,6 +350,43 @@ class IntervalTier(_LabelTier):
         s += super(IntervalTier, self)._repr_html_()
         return s + " )</p>"
 
+    def _asString(self, fmt=None):
+        """Return the tier as a string of type fmt."""
+        if fmt == 'praat_long':
+            labels = [
+                '        class: "IntervalTier"',
+                '        name: "{:s}"'.format(self.name),
+                "        xmin: {:0.12f}".format(self.start),
+                "        xmax: {:0.12f}".format(self.end),
+                "        intervals: size = {:d}".format(len(self))
+            ]
+            for idx,lab in enumerate(self._list):
+                lab = '\n'.join((
+                    "        intervals [{:d}]:".format(idx+1),
+                    "            xmin = {:1.20f}".format(lab.t1()),
+                    "            xmax = {:1.20f}".format(lab.t2()),
+                    '            text = "{:s}"'.format(lab.text)
+                ))
+                labels.append(lab)
+            return '\n'.join(labels)
+        elif fmt == 'praat_short':
+            # TODO: implement
+            pass
+        elif fmt == 'esps':
+            # TODO: implement
+            pass
+        elif fmt == 'wavesurfer':
+            pass
+            # TODO: implement
+
+    def add(self, label):
+        """Add an annotation object."""
+        super(IntervalTier, self).add(label)
+        if self.end == np.Inf or label.t2() > self.end:
+            self.end = label.t1()
+            
+    # TODO: add discard() and adjust self.end?
+    
     def tslice(self, t1, t2=None, tol=0.0, ltol=0.0, rtol=0.0, lincl=True, \
                rincl=True, lstrip=False, rstrip=False):
         """Return a time slice, an ordered list of Labels in the given time
@@ -395,6 +475,36 @@ class LabelManager(collections.MutableSet):
             s += "[]"
         return s + " )<p>"
         
+    def _asString(self, fmt=None):
+        """Return the tier as a string of type fmt."""
+        if fmt == 'praat_long':
+            tiers = [
+                'File type = "ooTextFile"',
+                'Object class = "TextGrid"',
+                "",
+                'xmin = {:0.20f}'.format(self._start()),
+                'xmax = {:0.20f}'.format(self._end()),
+                'tiers? <exists>',
+                'size = {:d}'.format(len(self._tiers)),
+                'item []:'
+            ]
+            for idx,tier in enumerate(self._tiers):
+                tier = '\n'.join((
+                    "    item [{:d}]:".format(idx+1),
+                    tier._asString('praat_long')
+                ))
+                tiers.append(tier)
+            return '\n'.join(tiers)
+        elif fmt == 'praat_short':
+            # TODO: implement
+            pass
+        elif fmt == 'esps':
+            # TODO: implement
+            pass
+        elif fmt == 'wavesurfer':
+            pass
+            # TODO: implement
+
 #### Methods required by abstract base class ####
 
     def __contains__(self, x):
@@ -479,17 +589,14 @@ or the tier name."""
 #        return self._tiers[tier]
 
     def names(self):
-        """Return a list of tier names."""
-        names = []
-        for tier in self._tiers:
-            names.append(tier.name)
-        return names
+        """Return a tuple of tier names."""
+        return tuple([tier.name for tier in self._tiers])
 
     def labelsAt(self, time, method='closest'):
         """Return a tuple of Label objects corresponding to the tiers at time."""
-        labels = []
-        for tier in self._tiers:
-            labels.append(tier.labelAt(time, method))
+        labels = tuple([tier.labelAt(time,method) for tier in self._tiers])
+#        for tier in self._tiers:
+#            labels.append(tier.labelAt(time, method))
         names = self.names()
         # Check to make sure every tier name is valid (not empty, not
         # containing whitespace, not a duplicate). If one or more names is not
@@ -602,9 +709,9 @@ guessed."""
         d['cls'] = m.group(1)
         m = re.compile("name = \"(.+)\"").search(f.readline().decode(codec))
         d['tname'] = m.group(1)
-        m = re.compile("xmin = (\d+)").search(f.readline().decode(codec))
+        m = re.compile("xmin = (-?[\d.]+)").search(f.readline().decode(codec))
         d['tstart'] = m.group(1)
-        m = re.compile("xmax = (\d+)").search(f.readline().decode(codec))
+        m = re.compile("xmax = (-?[\d.]+)").search(f.readline().decode(codec))
         d['tend'] = m.group(1)
         m = re.compile("(?:intervals|points): size = (\d+)").search(f.readline().decode(codec))
         d['numintvl'] = m.group(1)
@@ -682,6 +789,34 @@ guessed."""
                             #f.seek(-len(line),1)  # Rewind to intervals|points.
                             f.seek(loc)
 
+    def _start(self):
+        """Get the start time of the tiers in the LabelManager."""
+        return min([t.start for t in self._tiers])
+        
+    def _end(self):
+        """Get the end time of the tiers in the LabelManager."""
+        return max([t.end for t in self._tiers])
+        
+        
+    def _getPraatHeader(self, type=None):
+        """Get the header (pre-tier) section of a Praat label file."""
+        xmin = "{:1.16f}".format(self._start())
+        xmax = "{:1.16f}".format(self._end())
+        intervals = "{:d}".format(len(self._tiers))
+        if type == 'long':
+            xmin = "xmin = " + xmin
+            xmax = "xmax = " + xmax
+            intervals = "intervals: size = " + intervals
+        return "\n".join((
+            'File type = "ooTextFile"',
+            'Object class = "TextGrid"',
+            '',
+            xmin,
+            xmax,
+            '<exists>',
+            intervals
+            ))
+            
     def readESPS(self, filename, sep=None):
         """Read an ESPS label file."""
         
@@ -753,7 +888,7 @@ guessed."""
                 t2idx = fields.index(t2Col)
                 fields[t2idx] = 't2'
                 for fld in fields:
-                    if field == 't1' or field == 't2': continue
+                    if fld == 't1' or fld == 't2': continue
                     tiers.append(IntervalTier(name=fld))
             else:
                 for fld in fields:
@@ -806,6 +941,7 @@ if __name__ == '__main__':
 #    lm5 = LabelManager()
 #    lm5.readWavesurfer(samplefile)
 #
-    lm = LabelManager(fromFile='test/ipa.TextGrid', fromType='praat')
+    lm = LabelManager(fromFile='test/this_is_a_label_file.long.TextGrid', fromType='praat_long')
+    lm._getPraatHeader()
 #    lm = LabelManager(fromFile='test/Turkmen_NA_20130919_G_3.TextGrid', fromType='praat')
-    pass
+    #pass

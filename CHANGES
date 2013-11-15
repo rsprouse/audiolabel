@@ -1,5 +1,11 @@
 Change history for audiolabel
 
+Version 0.1.6: 20131115
+- Added initial support for serialization of Tier and LabelManager objects.
+- Various bug fixes and feature enhancements related to detecting/setting tier start and end times.
+- Changed return value of names() and labelsAt() methods to tuple from list.
+- Fixed minor bug in readESPS().
+
 Version 0.1.5: 20131025
 - Removed readIFCFormant() method.
 
