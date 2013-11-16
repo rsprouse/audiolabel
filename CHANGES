@@ -1,5 +1,8 @@
 Change history for audiolabel
 
+Version 0.1.7: 20131115
+- Added serialization format 'praat_short' ('praat_long' added in 0.1.6).
+
 Version 0.1.6: 20131115
 - Added initial support for serialization of Tier and LabelManager objects.
 - Various bug fixes and feature enhancements related to detecting/setting tier start and end times.

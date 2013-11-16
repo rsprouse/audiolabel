@@ -3,8 +3,8 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.1.6
-l """
+@version: 0.1.7
+"""
 
 import numpy as np
 import codecs
@@ -316,8 +316,20 @@ class PointTier(_LabelTier):
                 labels.append(lab)
             return '\n'.join(labels)
         elif fmt == 'praat_short':
-            # TODO: implement
-            pass
+            labels = [
+                '"TextTier"',
+                '"{:s}"'.format(self.name),
+                "{:0.12f}".format(self.start),
+                "{:0.12f}".format(self.end),
+                "{:d}".format(len(self))
+            ]
+            for lab in self._list:
+                lab = '\n'.join((
+                    "{:1.20f}".format(lab.t1()),
+                    '"{:s}"'.format(lab.text)
+                ))
+                labels.append(lab)
+            return '\n'.join(labels)
         elif fmt == 'esps':
             # TODO: implement
             pass
@@ -370,8 +382,21 @@ class IntervalTier(_LabelTier):
                 labels.append(lab)
             return '\n'.join(labels)
         elif fmt == 'praat_short':
-            # TODO: implement
-            pass
+            labels = [
+                '"IntervalTier"',
+                '"{:s}"'.format(self.name),
+                "{:0.12f}".format(self.start),
+                "{:0.12f}".format(self.end),
+                "{:d}".format(len(self))
+            ]
+            for lab in self._list:
+                lab = '\n'.join((
+                    "{:1.20f}".format(lab.t1()),
+                    "{:1.20f}".format(lab.t2()),
+                    '"{:s}"'.format(lab.text)
+                ))
+                labels.append(lab)
+            return '\n'.join(labels)
         elif fmt == 'esps':
             # TODO: implement
             pass
@@ -496,8 +521,18 @@ class LabelManager(collections.MutableSet):
                 tiers.append(tier)
             return '\n'.join(tiers)
         elif fmt == 'praat_short':
-            # TODO: implement
-            pass
+            tiers = [
+                'File type = "ooTextFile"',
+                'Object class = "TextGrid"',
+                "",
+                '{:0.20f}'.format(self._start()),
+                '{:0.20f}'.format(self._end()),
+                '<exists>',
+                '{:d}'.format(len(self._tiers))
+            ]
+            for tier in self._tiers:
+                tiers.append(tier._asString('praat_short'))
+            return '\n'.join(tiers)
         elif fmt == 'esps':
             # TODO: implement
             pass
@@ -941,7 +976,7 @@ if __name__ == '__main__':
 #    lm5 = LabelManager()
 #    lm5.readWavesurfer(samplefile)
 #
-    lm = LabelManager(fromFile='test/this_is_a_label_file.long.TextGrid', fromType='praat_long')
+    lm = LabelManager(fromFile='test/this_is_a_label_file.short.TextGrid', fromType='praat_short')
     lm._getPraatHeader()
 #    lm = LabelManager(fromFile='test/Turkmen_NA_20130919_G_3.TextGrid', fromType='praat')
     #pass
