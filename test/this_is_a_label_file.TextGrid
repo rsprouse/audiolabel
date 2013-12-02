@@ -1,0 +1,94 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 1.6550793650793652 
+tiers? <exists> 
+size = 3 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "word" 
+        xmin = 0 
+        xmax = 1.6550793650793652 
+        intervals: size = 6 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.04531977534891905 
+            text = "" 
+        intervals [2]:
+            xmin = 0.04531977534891905 
+            xmax = 0.4207853308004855 
+            text = "This" 
+        intervals [3]:
+            xmin = 0.4207853308004855 
+            xmax = 0.5735910801121695 
+            text = "is" 
+        intervals [4]:
+            xmin = 0.5735910801121695 
+            xmax = 0.6696404082509424 
+            text = "a" 
+        intervals [5]:
+            xmin = 0.6696404082509424 
+            xmax = 1.1178706062318822 
+            text = "label" 
+        intervals [6]:
+            xmin = 1.1178706062318822 
+            xmax = 1.6550793650793652 
+            text = "file " 
+    item [2]:
+        class = "IntervalTier" 
+        name = "phone" 
+        xmin = 0 
+        xmax = 1.6550793650793652 
+        intervals: size = 8 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.04531977534891905 
+            text = "" 
+        intervals [2]:
+            xmin = 0.04531977534891905 
+            xmax = 0.1850278890053159 
+            text = "TH" 
+        intervals [3]:
+            xmin = 0.1850278890053159 
+            xmax = 0.3058171956040756 
+            text = "IH2" 
+        intervals [4]:
+            xmin = 0.3058171956040756 
+            xmax = 0.4207853308004855 
+            text = "S" 
+        intervals [5]:
+            xmin = 0.4207853308004855 
+            xmax = 0.5182899517898458 
+            text = "IH0" 
+        intervals [6]:
+            xmin = 0.5182899517898458 
+            xmax = 0.5735910801121695 
+            text = "Z" 
+        intervals [7]:
+            xmin = 0.5735910801121695 
+            xmax = 0.6696404082509424 
+            text = "AH1" 
+        intervals [8]:
+            xmin = 0.6696404082509424 
+            xmax = 1.6550793650793652 
+            text = "" 
+    item [3]:
+        class = "IntervalTier" 
+        name = "context" 
+        xmin = 0 
+        xmax = 1.6550793650793652 
+        intervals: size = 3 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.04531977534891905 
+            text = "" 
+        intervals [2]:
+            xmin = 0.04531977534891905 
+            xmax = 0.4207853308004855 
+            text = "1" 
+        intervals [3]:
+            xmin = 0.4207853308004855 
+            xmax = 1.6550793650793652 
+            text = "2" 

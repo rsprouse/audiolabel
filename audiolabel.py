@@ -3,7 +3,7 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.1.7
+@version: 0.1.8
 """
 
 import numpy as np
@@ -226,12 +226,16 @@ from an iterable."""
         if returnMatch:
             return [(l,m) \
                     for l in labels \
-                    for m in [pattern.search(l.text.encode(l._codec))] \
+                    # TODO: verify that *not* encoding is the correct thing to do
+#                    for m in [pattern.search(l.text.encode(l._codec))] \
+                    for m in [pattern.search(l.text)] \
                     if m]
         else:
             return [l \
                     for l in labels \
-                    if pattern.search(l.text.encode(l._codec))]
+                    # TODO: verify that *not* encoding is the correct thing to do
+#                    if pattern.search(l.text.encode(l._codec))]
+                    if pattern.search(l.text)]
         
 
     def tslice(self, t1, t2=None, tol=0.0, ltol=0.0, rtol=0.0, lincl=True, \
@@ -976,7 +980,15 @@ if __name__ == '__main__':
 #    lm5 = LabelManager()
 #    lm5.readWavesurfer(samplefile)
 #
-    lm = LabelManager(fromFile='test/this_is_a_label_file.short.TextGrid', fromType='praat_short')
-    lm._getPraatHeader()
+#    lm = LabelManager(fromFile='test/this_is_a_label_file.short.TextGrid', fromType='praat_short')
+#    lm._getPraatHeader()
+#    vre = re.compile(
+#         "(?P<vowel>zh|zhw|i|in|e|u|eu|ae|a)(?P<stress>\d)?"
+#    )
+#    um = LabelManager(fromFile='c:/users/ronald/downloads/jiangbei-15.TextGrid', fromType='praat')
+#    am = LabelManager(fromFile='c:/users/ronald/downloads/jiangbei-15_v.TextGrid', fromType='praat')
+#    ul = um.tier('vowel').search(vre, returnMatch=True)
+#    al = am.tier('vowel').search(vre, returnMatch=True)
+    pass
 #    lm = LabelManager(fromFile='test/Turkmen_NA_20130919_G_3.TextGrid', fromType='praat')
     #pass

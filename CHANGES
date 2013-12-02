@@ -1,5 +1,8 @@
 Change history for audiolabel
 
+Version 0.1.8: 20131202
+- Provisional bug fix for improper encoding of text Label field in _LabelTier.search() which caused some searches to fail on a utf_16_be-encoded TextGrid (possibly other non-ASCII encodings would also fail). Added a TODO to verify that fix is the correct behavior.
+
 Version 0.1.7: 20131115
 - Added serialization format 'praat_short' ('praat_long' added in 0.1.6).
 
