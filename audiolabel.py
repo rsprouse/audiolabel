@@ -3,7 +3,7 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.1.8
+@version: 0.1.9
 """
 
 import numpy as np
@@ -648,9 +648,9 @@ or the tier name."""
                     break
                 else:
                     seen.append(name)
-            if not isinstance(labels, tuple):
-                Ret = collections.namedtuple('Ret', ' '.join(names))
-                labels = Ret(*labels)
+#            if not isinstance(labels, tuple):
+            Ret = collections.namedtuple('Ret', ' '.join(names))
+            labels = Ret(*labels)
         return labels
             
         
@@ -989,6 +989,9 @@ if __name__ == '__main__':
 #    am = LabelManager(fromFile='c:/users/ronald/downloads/jiangbei-15_v.TextGrid', fromType='praat')
 #    ul = um.tier('vowel').search(vre, returnMatch=True)
 #    al = am.tier('vowel').search(vre, returnMatch=True)
+#    tempifc = 'c:/users/ronald/Desktop/t.txt'
+#    ifc = LabelManager(fromFile=tempifc, fromType='table', t1Col='sec')
+#    meas = ifc.labelsAt(0.15)
     pass
 #    lm = LabelManager(fromFile='test/Turkmen_NA_20130919_G_3.TextGrid', fromType='praat')
     #pass
