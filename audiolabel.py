@@ -3,7 +3,7 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.1.9
+@version: 0.2.0
 """
 
 import numpy as np
@@ -11,12 +11,11 @@ import codecs
 import collections
 import copy
 import re
-#import logging
 
 # Some convenience functions to be used in the classes.
 
 # Strip white space at edges, remove surrounding quotes, and unescape quotes.
-def _cleanPraatString(s):
+def _clean_praat_string(s):
     return re.sub('""', '"', re.sub('^"|"$', '', s.strip()))
 
 class LabelError(Exception):
@@ -80,22 +79,28 @@ class Label(object):
             t2str = "<b>t2</b>={t2:0.4f}, ".format(t2=self._t2)
         return "<b>Label</b>( <b>t1</b>={t1:0.4f}, {t2}<b>text</b>='{text}' )".format(t1=self._t1,t2=t2str,text=self.text)
 
-    def _scaleBy(self, factor):
+    def _scale_by(self, factor):
         self._t1 *= factor
         if self._t2 != None: self._t2 *= factor
         
-    def _shiftBy(self, t):
+    def _shift_by(self, t):
         self._t1 += t
         if self._t2 != None: self._t2 += t
 
+    @property
     def t1(self):
         """Return the first (possibly only) timepoint of the Label."""
         return self._t1
 
+    def t1(self):
+        return self.t1
+
+    @property
     def t2(self):
         """Return the second timepoint of the Label."""
         return self._t2
         
+    @property
     def duration(self):
         """Return the duration of the label, or np.nan if the label represents a point
 in time."""
@@ -104,6 +109,7 @@ in time."""
             dur = self._t2 - self._t1
         return dur
 
+    @property
     def center(self):
         """Return the time centerpoint of the label. If the label represents
 a point in time, return the point."""
@@ -182,6 +188,10 @@ from an iterable."""
 
 #### End of methods required by abstract base class ####
 
+    def __getitem__(self, key):
+        '''Allow indexing of tier like a list.'''
+        return self._list[key]
+
     def prev(self, label):
         """Return the label preceding label."""
         idx = self._list.index(label)
@@ -191,21 +201,7 @@ from an iterable."""
             label = self._list[idx-1]
         return label
           
-    def first(self):
-        """Return the first Label object."""
-        try:
-            return self._list[0]
-        except:
-            return None
-
-    def last(self):
-        """Return the last Label object."""
-        try:
-            return self._list[-1]
-        except:
-            return None
-
-    def labelAt(self, time, method='closest'):
+    def label_at(self, time, method='closest'):
         """Return the label occurring at a particular time."""
         label = None
         if method == 'closest':
@@ -213,6 +209,10 @@ from an iterable."""
             label = self._list[idx]
         return label
         
+    def labelAt(self, time, method='closest'):
+        '''deprecated'''
+        return self.label_at(time, method)
+
     def search(self, pattern, returnMatch=False, **kwargs):
         """Return the ordered list of Label objects that contain pattern. If
         the returnMatch is True, return an ordered list of tuples that
@@ -269,19 +269,27 @@ from an iterable."""
                 sl = sl[0]
         return sl
 
-    def scaleBy(self, factor):
+    def scale_by(self, factor):
         """Multiply all annotation times by a factor."""
         for item in self:
-            item._scaleBy(factor)
+            item._scale_by(factor)
 
-    def shiftBy(self, t):
+    def scaleBy(self, factor):
+        '''deprecated'''
+        self.scale_by(factor)
+
+    def shift_by(self, t):
         """Add a constant to all annotation times."""
         for item in self:
-            item._shiftBy(t)
+            item._shift_by(t)
+
+    def shiftBy(self, t):
+        '''deprecated'''
+        self.shift_by(t)
 
     # TODO: come up with a good name and calling convention, then make 
     # this a normal (non-hidden) method; change in subclasses too.
-    def _asString(self, fmt=None):
+    def _as_string(self, fmt=None):
         """Return the tier as a string of label file type fmt. To be implemented in a subclass."""
         pass
     
@@ -301,7 +309,7 @@ class PointTier(_LabelTier):
         s += super(PointTier, self)._repr_html_()
         return s + " )</p>"
 
-    def _asString(self, fmt=None):
+    def _as_string(self, fmt=None):
         """Return the tier as a string of type fmt."""
         if fmt == 'praat_long':
             labels = [
@@ -366,7 +374,7 @@ class IntervalTier(_LabelTier):
         s += super(IntervalTier, self)._repr_html_()
         return s + " )</p>"
 
-    def _asString(self, fmt=None):
+    def _as_string(self, fmt=None):
         """Return the tier as a string of type fmt."""
         if fmt == 'praat_long':
             labels = [
@@ -449,7 +457,7 @@ class IntervalTier(_LabelTier):
                 sl = sl[0]
         return sl
 
-    def labelAt(self, time, method='closest'):
+    def label_at(self, time, method='closest'):
         """Return the label occurring at a particular time."""
         label = None
         if method == 'closest':
@@ -458,6 +466,9 @@ class IntervalTier(_LabelTier):
             idx = indexes[0][-1]
             label = self._list[idx]
         return label
+
+    def labelAt(self, time, method='closest'):
+        return self.label_at(time, method)
 
 class LabelManager(collections.MutableSet):
     """Manage one or more Tier objects."""
@@ -470,20 +481,17 @@ class LabelManager(collections.MutableSet):
         self.appdata = appdata
         if fromFile != None:
             if fromType == 'praat':
-                self.readPraat(fromFile)
+                self.read_praat(fromFile)
             elif fromType == 'praat_long':
-                self.readPraatLong(fromFile)
+                self.read_praat_long(fromFile)
             elif fromType == 'praat_short':
-                self.readPraatShort(fromFile)
+                self.read_praat_short(fromFile)
             elif fromType == 'esps':
-                self.readESPS(fromFile)
+                self.read_esps(fromFile)
             elif fromType == 'wavesurfer':
-                self.readWavesurfer(fromFile)
+                self.read_wavesurfer(fromFile)
             elif fromType == 'table':
-                self.readTable(fromFile, **kwargs)
-            # TODO: readIFCFormant is deprecated. Remove.
-            elif fromType == 'ifcformant':
-                self.readIFCFormant(fromFile)
+                self.read_table(fromFile, **kwargs)
               
     def __repr__(self):
         s = "LabelManager(tiers="
@@ -504,7 +512,7 @@ class LabelManager(collections.MutableSet):
             s += "[]"
         return s + " )<p>"
         
-    def _asString(self, fmt=None):
+    def _as_string(self, fmt=None):
         """Return the tier as a string of type fmt."""
         if fmt == 'praat_long':
             tiers = [
@@ -520,7 +528,7 @@ class LabelManager(collections.MutableSet):
             for idx,tier in enumerate(self._tiers):
                 tier = '\n'.join((
                     "    item [{:d}]:".format(idx+1),
-                    tier._asString('praat_long')
+                    tier._as_string('praat_long')
                 ))
                 tiers.append(tier)
             return '\n'.join(tiers)
@@ -535,7 +543,7 @@ class LabelManager(collections.MutableSet):
                 '{:d}'.format(len(self._tiers))
             ]
             for tier in self._tiers:
-                tiers.append(tier._asString('praat_short'))
+                tiers.append(tier._as_string('praat_short'))
             return '\n'.join(tiers)
         elif fmt == 'esps':
             # TODO: implement
@@ -631,7 +639,7 @@ or the tier name."""
         """Return a tuple of tier names."""
         return tuple([tier.name for tier in self._tiers])
 
-    def labelsAt(self, time, method='closest'):
+    def labels_at(self, time, method='closest'):
         """Return a tuple of Label objects corresponding to the tiers at time."""
         labels = tuple([tier.labelAt(time,method) for tier in self._tiers])
 #        for tier in self._tiers:
@@ -653,8 +661,11 @@ or the tier name."""
             labels = Ret(*labels)
         return labels
             
+    def labelsAt(self, time, method='closest'):
+        '''deprecated'''
+        return self.labels_at(time, method)
         
-    def _guessPraatEncoding(self, firstline):
+    def _guess_praat_encoding(self, firstline):
         '''Guess and return the encoding of a file from the BOM. Limited to 'utf_8',
 'utf_16_be', and 'utf_16_le'. Assume 'ascii' if no BOM.'''
         if firstline.startswith(codecs.BOM_UTF16_LE):
@@ -667,30 +678,34 @@ or the tier name."""
             codec = 'ascii'
         return codec
 
-    def readPraat(self, filename, codec=None):
+    def read_praat(self, filename, codec=None):
         """Populate labels by reading in a Praat file. The short/long format will be
 guessed."""
         with open(filename, 'rb') as f:
             firstline = f.readline()
             if codec == None:
-                codec = self._guessPraatEncoding(firstline)
+                codec = self._guess_praat_encoding(firstline)
             f.readline()   # skip a line
             f.readline()   # skip a line
             xmin = f.readline().decode(codec)  # should be 'xmin = ' line
             if re.match('xmin = \d', xmin):
                 f.close()
-                self.readPraatLong(filename, codec=codec)
+                self.read_praat_long(filename, codec=codec)
             elif re.match('\d', xmin):
                 f.close()
-                self.readPraatShort(filename, codec=codec)
+                self.read_praat_short(filename, codec=codec)
             else:
                 raise LabelManagerParseError("File does not appear to be a Praat format.")
         
-    def readPraatShort(self, filename, codec=None):
+    def readPraat(self, filename, codec=None):
+        '''deprecated'''
+        self.read_praat(filename, codec)
+
+    def read_praat_short(self, filename, codec=None):
         with open(filename, 'rb') as f:
             firstline = f.readline()
             if codec == None:
-                codec = self._guessPraatEncoding(firstline)
+                codec = self._guess_praat_encoding(firstline)
             # Read in header lines.
             # TODO: use header lines for error checking or processing hints? Current
             # implementation ignores their content.
@@ -734,15 +749,19 @@ guessed."""
                     lab = Label(
                                 t1=line,
                                 t2=t2,
-                                text=_cleanPraatString(f.readline().decode(codec)),
+                                text=_clean_praat_string(f.readline().decode(codec)),
                                 codec=codec
                                )
                     tier.add(lab)
             if tier != None: self.add(tier)
 
+    def readPraatShort(self, filename, codec=None):
+        '''deprecated'''
+        self.read_praat_short(filename, codec)
+
     # Read the metadata section at the top of a tier in a praat_long file
     # referenced by f. Create a label tier from the metadata and return it.
-    def _readPraatLongTierMetadata(self, f, codec=None):
+    def _read_praat_long_tier_metadata(self, f, codec=None):
         d = dict(cls=None, tname=None, tstart=None, tend=None, numintvl=None)
         m = re.compile("class = \"(.+)\"").search(f.readline().decode(codec))
         d['cls'] = m.group(1)
@@ -762,11 +781,11 @@ guessed."""
                                   name=d['tname'], numlabels=d['numintvl'])
         return tier
 
-    def readPraatLong(self, filename, codec=None):
+    def read_praat_long(self, filename, codec=None):
         with open(filename, 'rb') as f:
             firstline = f.readline()
             if codec == None:
-                codec = self._guessPraatEncoding(firstline)
+                codec = self._guess_praat_encoding(firstline)
             # Regexes to match line containing t1, t2, label text, and label end.
             # TODO: use named captures
             t1_re = re.compile("(?:xmin|number) = ([^\s]+)")
@@ -784,7 +803,7 @@ guessed."""
                 # FIXME: better error
                 if line == '': raise Exception("Could not read file.")
             
-            tier = self._readPraatLongTierMetadata(f, codec=codec)
+            tier = self._read_praat_long_tier_metadata(f, codec=codec)
             
             # Don't use 'for line in f' loop construct since we use multiple
             # readline() calls in the loop.
@@ -814,19 +833,23 @@ guessed."""
                         lab = Label(
                             t1=t1,
                             t2=t2,
-                            text=_cleanPraatString(text),
+                            text=_clean_praat_string(text),
                             codec=codec
                         )
                         tier.add(lab)
                         if item_re.search(line):  # Start new tier.
                             self.add(tier)
-                            tier = self._readPraatLongTierMetadata(f, codec=codec)
+                            tier = self._read_praat_long_tier_metadata(f, codec=codec)
                         elif line == '': # Reached EOF
                             self.add(tier)
                             grabbing_labels = False
                         else:      # Found a new label line (intervals|points).
                             #f.seek(-len(line),1)  # Rewind to intervals|points.
                             f.seek(loc)
+
+    def readPraatLong(self, filename, codec=None):
+        '''deprecated'''
+        self.read_praat_long(filename, codec)
 
     def _start(self):
         """Get the start time of the tiers in the LabelManager."""
@@ -837,7 +860,7 @@ guessed."""
         return max([t.end for t in self._tiers])
         
         
-    def _getPraatHeader(self, type=None):
+    def _get_praat_header(self, type=None):
         """Get the header (pre-tier) section of a Praat label file."""
         xmin = "{:1.16f}".format(self._start())
         xmax = "{:1.16f}".format(self._end())
@@ -855,8 +878,12 @@ guessed."""
             '<exists>',
             intervals
             ))
-            
+
     def readESPS(self, filename, sep=None):
+        '''deprecated'''
+        self.read_esps(filename, sep)
+
+    def read_esps(self, filename, sep=None):
         """Read an ESPS label file."""
         
         # sep is the character used to separate 'tiers' (fields) in the
@@ -894,13 +921,16 @@ guessed."""
                     try:
                         tier = self.tier(idx)
                     except IndexError:
-                        #logging.debug("Adding tier for {:d}.\n".format(idx))
                         tier = PointTier()
                         self.add(tier)
                     tier.add(Label(t1=t1, text=val, appdata=color))
                 
  
     def readWavesurfer(self, filename):
+        '''deprecated'''
+        self.read_wavesurfer(filename)
+
+    def read_wavesurfer(self, filename):
         """Read a wavesurfer label file."""
         with open(filename, 'rb') as f:
             tier = IntervalTier()
@@ -910,6 +940,11 @@ guessed."""
             self.add(tier)                
 
     def readTable(self, filename, sep='\t', fieldsInHead=True,
+                  t1Col='t1', t2Col='t2', fields=None, skipN=0):
+        '''deprecated'''
+        self.read_table(filename, sep, fieldsInHead, tiCol, t2Col, fields, skipN)
+
+    def read_table(self, filename, sep='\t', fieldsInHead=True,
                   t1Col='t1', t2Col='t2', fields=None, skipN=0):
         """Generic reader for tabular file data."""
         with open(filename, 'rb') as f:
@@ -964,24 +999,19 @@ if __name__ == '__main__':
 #    lm2.readPraatLong(samplefile)
 #    print lm2.tier('word').search('^she$')
 
-#    samplefile='C:\\src\\test.ifc'
-#    lm3 = LabelManager()
-#    lm3.readIFCFormant(samplefile)
-#    print lm3.tier('f1').search('189$')
-#    print lm3.labelsAt(115)
 
 #    samplefile='C:\\src\\phonlab\\annopy\\data\\s1703a.words'
 #    lm4 = LabelManager()
-#    lm4.readESPS(samplefile)
+#    lm4.read_esps(samplefile)
 #    print lm4.tier(0).search('SIL')
 #    print lm4.labelsAt(1)
 
 #    samplefile='C:\\src\\phonlab\\annopy\\data\\wavesurfer1.lab'
 #    lm5 = LabelManager()
-#    lm5.readWavesurfer(samplefile)
+#    lm5.read_wavesurfer(samplefile)
 #
 #    lm = LabelManager(fromFile='test/this_is_a_label_file.short.TextGrid', fromType='praat_short')
-#    lm._getPraatHeader()
+#    lm._get_praat_header()
 #    vre = re.compile(
 #         "(?P<vowel>zh|zhw|i|in|e|u|eu|ae|a)(?P<stress>\d)?"
 #    )
