@@ -910,7 +910,8 @@ guessed."""
             self.add(tier)                
 
     def readTable(self, infile, sep='\t', fieldsInHead=True,
-                  t1Col='t1', t2Col='t2', fields=None, skipN=0):
+                  t1Col='t1', t2Col='t2', fields=None, skipN=0,
+                  auto_t1=False, auto_t1_start=0, auto_t1_step=1):
         """Generic reader for tabular file data. infile can be a filename or open file handle."""
         try:
             f = open(infile, 'rb')
@@ -926,8 +927,11 @@ guessed."""
         else:
             fields = [fld.strip() for fld in fields.split(',')]
         tiers = []
-        t1idx = fields.index(t1Col)
-        fields[t1idx] = 't1'
+        if auto_t1:
+            t1idx = None
+        else:
+            t1idx = fields.index(t1Col)
+            fields[t1idx] = 't1'
         t2idx = None
         if t2Col in fields:
             t2idx = fields.index(t2Col)
@@ -942,9 +946,12 @@ guessed."""
 
         # Parse labels from rows.
         t1 = t2 = tstart = tend = None
-        for line in [l for l in f.readlines() if l != '']:
+        for idx, line in enumerate([l for l in f.readlines() if l != '']):
             vals = line.rstrip('\r\n').split(sep)
-            t1 = vals.pop(t1idx)
+            if auto_t1:
+                t1 = (idx * auto_t1_step) + auto_t1_start
+            else:
+                t1 = vals.pop(t1idx)
             if tstart == None: tstart = t1
             if t2idx != None: t2 = vals.pop(t2idx)
             for tier, val in zip(tiers, vals):
