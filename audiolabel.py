@@ -909,46 +909,56 @@ guessed."""
                 tier.add(Label(t1=t1, t2=t2, text=text))
             self.add(tier)                
 
-    def readTable(self, filename, sep='\t', fieldsInHead=True,
+    def readTable(self, infile, sep='\t', fieldsInHead=True,
                   t1Col='t1', t2Col='t2', fields=None, skipN=0):
-        """Generic reader for tabular file data."""
-        with open(filename, 'rb') as f:
-            for skip in range(skipN):
-                f.readline()
-            if fieldsInHead:
-                fields = f.readline().rstrip().split(sep)
-            else:
-                fields = [fld.strip() for fld in fields.split(',')]
-            tiers = []
-            t1idx = fields.index(t1Col)
-            fields[t1idx] = 't1'
-            t2idx = None
-            if t2Col in fields:
-                t2idx = fields.index(t2Col)
-                fields[t2idx] = 't2'
-                for fld in fields:
-                    if fld == 't1' or fld == 't2': continue
-                    tiers.append(IntervalTier(name=fld))
-            else:
-                for fld in fields:
-                    if fld == 't1': continue
-                    tiers.append(PointTier(name=fld))
-            t1 = t2 = tstart = tend = None
-            for line in f.readlines():
-                vals = line.rstrip('\r\n').split(sep)
-                t1 = vals.pop(t1idx)
-                if tstart == None: tstart = t1
-                if t2idx != None: t2 = vals.pop(t2idx)
-                for tier, val in zip(tiers, vals):
-                    tier.add(Label(t1=t1, t2=t2, text=val))
-            if t2 == None:
-                tend = t1
-            else:
-                tend = t2
-            for tier in tiers:
-                tier.start = tstart
-                tier.end = tend
-                self.add(tier)
+        """Generic reader for tabular file data. infile can be a filename or open file handle."""
+        try:
+            f = open(infile, 'rb')
+        except TypeError as e:  # infile should already be a file handle
+            f = infile
+
+        for skip in range(skipN):
+            f.readline()
+
+        # Process field names.
+        if fieldsInHead:
+            fields = f.readline().rstrip().split(sep)
+        else:
+            fields = [fld.strip() for fld in fields.split(',')]
+        tiers = []
+        t1idx = fields.index(t1Col)
+        fields[t1idx] = 't1'
+        t2idx = None
+        if t2Col in fields:
+            t2idx = fields.index(t2Col)
+            fields[t2idx] = 't2'
+            for fld in fields:
+                if fld == 't1' or fld == 't2': continue
+                tiers.append(IntervalTier(name=fld))
+        else:
+            for fld in fields:
+                if fld == 't1': continue
+                tiers.append(PointTier(name=fld))
+
+        # Parse labels from rows.
+        t1 = t2 = tstart = tend = None
+        for line in [l for l in f.readlines() if l != '']:
+            vals = line.rstrip('\r\n').split(sep)
+            t1 = vals.pop(t1idx)
+            if tstart == None: tstart = t1
+            if t2idx != None: t2 = vals.pop(t2idx)
+            for tier, val in zip(tiers, vals):
+                tier.add(Label(t1=t1, t2=t2, text=val))
+
+        # Finish the tier.
+        if t2 == None:
+            tend = t1
+        else:
+            tend = t2
+        for tier in tiers:
+            tier.start = tstart
+            tier.end = tend
+            self.add(tier)
             
 
                 
