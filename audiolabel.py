@@ -935,7 +935,7 @@ guessed."""
                     tiers.append(PointTier(name=fld))
             t1 = t2 = tstart = tend = None
             for line in f.readlines():
-                vals = line.rstrip('\n').split(sep)
+                vals = line.rstrip('\r\n').split(sep)
                 t1 = vals.pop(t1idx)
                 if tstart == None: tstart = t1
                 if t2idx != None: t2 = vals.pop(t2idx)
