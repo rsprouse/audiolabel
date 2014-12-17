@@ -911,8 +911,8 @@ guessed."""
 
     def readTable(self, infile, sep='\t', fieldsInHead=True,
                   t1Col='t1', t2Col='t2', fields=None, skipN=0,
-                  auto_t1=False, auto_t1_start=0, auto_t1_step=1):
-        """Generic reader for tabular file data. infile can be a filename or open file handle."""
+                  t1_start=0, t1_step=1):
+        """Generic reader for tabular file data. infile can be a filename or open file handle. If t1Col is None, automatically create a t1 index with first value t1_start and adding t1_step for subsequent values."""
         try:
             f = open(infile, 'rb')
         except TypeError as e:  # infile should already be a file handle
@@ -927,7 +927,7 @@ guessed."""
         else:
             fields = [fld.strip() for fld in fields.split(',')]
         tiers = []
-        if auto_t1:
+        if t1Col == None:
             t1idx = None
         else:
             t1idx = fields.index(t1Col)
@@ -948,8 +948,8 @@ guessed."""
         t1 = t2 = tstart = tend = None
         for idx, line in enumerate([l for l in f.readlines() if l != '']):
             vals = line.rstrip('\r\n').split(sep)
-            if auto_t1:
-                t1 = (idx * auto_t1_step) + auto_t1_start
+            if t1Col == None:
+                t1 = (idx * t1_step) + t1_start
             else:
                 t1 = vals.pop(t1idx)
             if tstart == None: tstart = t1
