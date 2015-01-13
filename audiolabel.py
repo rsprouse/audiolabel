@@ -49,7 +49,7 @@ class LabelManagerParseError(LabelError):
 class Label(object):
     """An individual annotation."""
     
-    def __init__(self, t1, t2=None, text='', appdata=None, metadata=None,
+    def __init__(self, text='', t1, t2=None, appdata=None, metadata=None,
                  codec='utf_8', *args, **kwargs):
         super(Label, self).__init__()
         if t1 == None:
@@ -734,9 +734,9 @@ guessed."""
 
                         t2 = None
                     lab = Label(
+                                text=_clean_praat_string(f.readline().decode(codec)),
                                 t1=line,
                                 t2=t2,
-                                text=_clean_praat_string(f.readline().decode(codec)),
                                 codec=codec
                                )
                     tier.add(lab)
@@ -814,9 +814,9 @@ guessed."""
                     else:
                         grabbing_text = False
                         lab = Label(
+                            text=_clean_praat_string(text),
                             t1=t1,
                             t2=t2,
-                            text=_clean_praat_string(text),
                             codec=codec
                         )
                         tier.add(lab)
@@ -898,7 +898,7 @@ guessed."""
                     except IndexError:
                         tier = PointTier()
                         self.add(tier)
-                    tier.add(Label(t1=t1, text=val, appdata=color))
+                    tier.add(Label(text=val, t1=t1, appdata=color))
                 
  
     def read_wavesurfer(self, filename):
@@ -907,7 +907,7 @@ guessed."""
             tier = IntervalTier()
             for line in f:
                 (t1,t2,text) = line.strip().split(None,2)
-                tier.add(Label(t1=t1, t2=t2, text=text))
+                tier.add(Label(text=text, t1=t1, t2=t2))
             self.add(tier)                
 
     def read_table(self, filename, sep='\t', fieldsInHead=True,
@@ -941,7 +941,7 @@ guessed."""
                 if tstart == None: tstart = t1
                 if t2idx != None: t2 = vals.pop(t2idx)
                 for tier, val in zip(tiers, vals):
-                    tier.add(Label(t1=t1, t2=t2, text=val))
+                    tier.add(Label(text=val, t1=t1, t2=t2))
             if t2 == None:
                 tend = t1
             else:
