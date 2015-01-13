@@ -92,9 +92,6 @@ class Label(object):
         """Return the first (possibly only) timepoint of the Label."""
         return self._t1
 
-    def t1(self):
-        return self.t1
-
     @property
     def t2(self):
         """Return the second timepoint of the Label."""
@@ -194,11 +191,20 @@ from an iterable."""
 
     def prev(self, label):
         """Return the label preceding label."""
-        idx = self._list.index(label)
-        if idx == 0:
+        idx = self._list.index(label) - 1
+        try:
+            label = self._list[idx]
+        except IndexError:
             label = None
-        else:
-            label = self._list[idx-1]
+        return label
+          
+    def next(self, label):
+        """Return the label following label."""
+        idx = self._list.index(label) + 1
+        try:
+            label = self._list[idx]
+        except IndexError:
+            label = None
         return label
           
     def label_at(self, time, method='closest'):
@@ -274,18 +280,10 @@ from an iterable."""
         for item in self:
             item._scale_by(factor)
 
-    def scaleBy(self, factor):
-        '''deprecated'''
-        self.scale_by(factor)
-
     def shift_by(self, t):
         """Add a constant to all annotation times."""
         for item in self:
             item._shift_by(t)
-
-    def shiftBy(self, t):
-        '''deprecated'''
-        self.shift_by(t)
 
     # TODO: come up with a good name and calling convention, then make 
     # this a normal (non-hidden) method; change in subclasses too.
@@ -466,9 +464,6 @@ class IntervalTier(_LabelTier):
             idx = indexes[0][-1]
             label = self._list[idx]
         return label
-
-    def labelAt(self, time, method='closest'):
-        return self.label_at(time, method)
 
 class LabelManager(collections.MutableSet):
     """Manage one or more Tier objects."""
@@ -661,10 +656,6 @@ or the tier name."""
             labels = Ret(*labels)
         return labels
             
-    def labelsAt(self, time, method='closest'):
-        '''deprecated'''
-        return self.labels_at(time, method)
-        
     def _guess_praat_encoding(self, firstline):
         '''Guess and return the encoding of a file from the BOM. Limited to 'utf_8',
 'utf_16_be', and 'utf_16_le'. Assume 'ascii' if no BOM.'''
@@ -697,10 +688,6 @@ guessed."""
             else:
                 raise LabelManagerParseError("File does not appear to be a Praat format.")
         
-    def readPraat(self, filename, codec=None):
-        '''deprecated'''
-        self.read_praat(filename, codec)
-
     def read_praat_short(self, filename, codec=None):
         with open(filename, 'rb') as f:
             firstline = f.readline()
@@ -754,10 +741,6 @@ guessed."""
                                )
                     tier.add(lab)
             if tier != None: self.add(tier)
-
-    def readPraatShort(self, filename, codec=None):
-        '''deprecated'''
-        self.read_praat_short(filename, codec)
 
     # Read the metadata section at the top of a tier in a praat_long file
     # referenced by f. Create a label tier from the metadata and return it.
@@ -847,10 +830,6 @@ guessed."""
                             #f.seek(-len(line),1)  # Rewind to intervals|points.
                             f.seek(loc)
 
-    def readPraatLong(self, filename, codec=None):
-        '''deprecated'''
-        self.read_praat_long(filename, codec)
-
     def _start(self):
         """Get the start time of the tiers in the LabelManager."""
         return min([t.start for t in self._tiers])
@@ -878,10 +857,6 @@ guessed."""
             '<exists>',
             intervals
             ))
-
-    def readESPS(self, filename, sep=None):
-        '''deprecated'''
-        self.read_esps(filename, sep)
 
     def read_esps(self, filename, sep=None):
         """Read an ESPS label file."""
@@ -926,10 +901,6 @@ guessed."""
                     tier.add(Label(t1=t1, text=val, appdata=color))
                 
  
-    def readWavesurfer(self, filename):
-        '''deprecated'''
-        self.read_wavesurfer(filename)
-
     def read_wavesurfer(self, filename):
         """Read a wavesurfer label file."""
         with open(filename, 'rb') as f:
@@ -938,11 +909,6 @@ guessed."""
                 (t1,t2,text) = line.strip().split(None,2)
                 tier.add(Label(t1=t1, t2=t2, text=text))
             self.add(tier)                
-
-    def readTable(self, filename, sep='\t', fieldsInHead=True,
-                  t1Col='t1', t2Col='t2', fields=None, skipN=0):
-        '''deprecated'''
-        self.read_table(filename, sep, fieldsInHead, tiCol, t2Col, fields, skipN)
 
     def read_table(self, filename, sep='\t', fieldsInHead=True,
                   t1Col='t1', t2Col='t2', fields=None, skipN=0):
