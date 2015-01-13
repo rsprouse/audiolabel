@@ -49,7 +49,7 @@ class LabelManagerParseError(LabelError):
 class Label(object):
     """An individual annotation."""
     
-    def __init__(self, text='', t1, t2=None, appdata=None, metadata=None,
+    def __init__(self, text='', t1=None, t2=None, appdata=None, metadata=None,
                  codec='utf_8', *args, **kwargs):
         super(Label, self).__init__()
         if t1 == None:
@@ -159,12 +159,12 @@ class _LabelTier(collections.MutableSet):
     
     def add(self, label):
         """Add an annotation object."""
-        idx = np.searchsorted(self._time, label.t1())
+        idx = np.searchsorted(self._time, label.t1)
         self._list.insert(idx, label)
         if len(self._time) > idx and np.isnan(self._time[idx]):
-            self._time[idx] = label.t1()
+            self._time[idx] = label.t1
         else:
-            self._time = np.hstack([self._time[:idx], label.t1(), self._time[idx:]])
+            self._time = np.hstack([self._time[:idx], label.t1, self._time[idx:]])
             
     def discard(self, label):
         """Remove a Label object."""
@@ -215,13 +215,9 @@ from an iterable."""
             label = self._list[idx]
         return label
         
-    def labelAt(self, time, method='closest'):
-        '''deprecated'''
-        return self.label_at(time, method)
-
-    def search(self, pattern, returnMatch=False, **kwargs):
+    def search(self, pattern, return_match=False, **kwargs):
         """Return the ordered list of Label objects that contain pattern. If
-        the returnMatch is True, return an ordered list of tuples that
+        the return_match is True, return an ordered list of tuples that
         contain the matching labels and corresponding match objects."""
         if isinstance(pattern, basestring):
             pattern = re.compile(pattern)
@@ -229,7 +225,7 @@ from an iterable."""
             labels = self._list
         else:
             labels = self.tslice(**kwargs)
-        if returnMatch:
+        if return_match:
             return [(l,m) \
                     for l in labels \
                     # TODO: verify that *not* encoding is the correct thing to do
@@ -259,13 +255,13 @@ from an iterable."""
         else:
             right = t2 + tol + rtol
         if lincl and rincl:
-            sl = [l for l in self._list if (l.t1() >= left and l.t1() <= right) ]
+            sl = [l for l in self._list if (l.t1 >= left and l.t1 <= right) ]
         elif lincl:
-            sl = [l for l in self._list if (l.t1() >= left and l.t1() < right) ]
+            sl = [l for l in self._list if (l.t1 >= left and l.t1 < right) ]
         elif rincl:
-            sl = [l for l in self._list if (l.t1() > left and l.t1() <= right) ]
+            sl = [l for l in self._list if (l.t1 > left and l.t1 <= right) ]
         else:
-            sl = [l for l in self._list if (l.t1() > left and l.t1() < right) ]
+            sl = [l for l in self._list if (l.t1 > left and l.t1 < right) ]
         if t2 == None:
             if len(sl) > 1:
                 raise IndexError(
@@ -320,7 +316,7 @@ class PointTier(_LabelTier):
             for idx,lab in enumerate(self._list):
                 lab = '\n'.join((
                     "        points [{:d}]:".format(idx+1),
-                    "            number = {:1.20f}".format(lab.t1()),
+                    "            number = {:1.20f}".format(lab.t1),
                     '            mark = "{:s}"'.format(lab.text)
                 ))
                 labels.append(lab)
@@ -335,7 +331,7 @@ class PointTier(_LabelTier):
             ]
             for lab in self._list:
                 lab = '\n'.join((
-                    "{:1.20f}".format(lab.t1()),
+                    "{:1.20f}".format(lab.t1),
                     '"{:s}"'.format(lab.text)
                 ))
                 labels.append(lab)
@@ -350,8 +346,8 @@ class PointTier(_LabelTier):
     def add(self, label):
         """Add an annotation object."""
         super(PointTier, self).add(label)
-        if self.end == np.Inf or label.t1() > self.end:
-            self.end = label.t1()
+        if self.end == np.Inf or label.t1 > self.end:
+            self.end = label.t1
             
     # TODO: add discard() and adjust self.end?
     
@@ -385,8 +381,8 @@ class IntervalTier(_LabelTier):
             for idx,lab in enumerate(self._list):
                 lab = '\n'.join((
                     "        intervals [{:d}]:".format(idx+1),
-                    "            xmin = {:1.20f}".format(lab.t1()),
-                    "            xmax = {:1.20f}".format(lab.t2()),
+                    "            xmin = {:1.20f}".format(lab.t1),
+                    "            xmax = {:1.20f}".format(lab.t2),
                     '            text = "{:s}"'.format(lab.text)
                 ))
                 labels.append(lab)
@@ -401,8 +397,8 @@ class IntervalTier(_LabelTier):
             ]
             for lab in self._list:
                 lab = '\n'.join((
-                    "{:1.20f}".format(lab.t1()),
-                    "{:1.20f}".format(lab.t2()),
+                    "{:1.20f}".format(lab.t1),
+                    "{:1.20f}".format(lab.t2),
                     '"{:s}"'.format(lab.text)
                 ))
                 labels.append(lab)
@@ -417,8 +413,8 @@ class IntervalTier(_LabelTier):
     def add(self, label):
         """Add an annotation object."""
         super(IntervalTier, self).add(label)
-        if self.end == np.Inf or label.t2() > self.end:
-            self.end = label.t1()
+        if self.end == np.Inf or label.t2 > self.end:
+            self.end = label.t1
             
     # TODO: add discard() and adjust self.end?
     
@@ -439,13 +435,13 @@ class IntervalTier(_LabelTier):
         else:
             right = t2 + tol + rtol
         if lincl and rincl:
-            sl = [l for l in self._list if (l.t2() >= left and l.t1() <= right) ]
+            sl = [l for l in self._list if (l.t2 >= left and l.t1 <= right) ]
         elif lincl:
-            sl = [l for l in self._list if (l.t2() >= left and l.t1() < right) ]
+            sl = [l for l in self._list if (l.t2 >= left and l.t1 < right) ]
         elif rincl:
-            sl = [l for l in self._list if (l.t2() > left and l.t1() <= right) ]
+            sl = [l for l in self._list if (l.t2 > left and l.t1 <= right) ]
         else:
-            sl = [l for l in self._list if (l.t2() > left and l.t1() < right) ]
+            sl = [l for l in self._list if (l.t2 > left and l.t1 < right) ]
         if t2 == None:
             if len(sl) > 1:
                 raise IndexError(
@@ -468,25 +464,25 @@ class IntervalTier(_LabelTier):
 class LabelManager(collections.MutableSet):
     """Manage one or more Tier objects."""
     
-    def __init__(self, appdata=None, fromFile=None, fromType=None,
+    def __init__(self, appdata=None, from_file=None, from_type=None,
                  *args, **kwargs):
         super(LabelManager, self).__init__()
         self._tiers = []
         # Container for app-specific data not managed by this class.
         self.appdata = appdata
-        if fromFile != None:
-            if fromType == 'praat':
-                self.read_praat(fromFile)
-            elif fromType == 'praat_long':
-                self.read_praat_long(fromFile)
-            elif fromType == 'praat_short':
-                self.read_praat_short(fromFile)
-            elif fromType == 'esps':
-                self.read_esps(fromFile)
-            elif fromType == 'wavesurfer':
-                self.read_wavesurfer(fromFile)
-            elif fromType == 'table':
-                self.read_table(fromFile, **kwargs)
+        if from_file != None:
+            if from_type == 'praat':
+                self.read_praat(from_file)
+            elif from_type == 'praat_long':
+                self.read_praat_long(from_file)
+            elif from_type == 'praat_short':
+                self.read_praat_short(from_file)
+            elif from_type == 'esps':
+                self.read_esps(from_file)
+            elif from_type == 'wavesurfer':
+                self.read_wavesurfer(from_file)
+            elif from_type == 'table':
+                self.read_table(from_file, **kwargs)
               
     def __repr__(self):
         s = "LabelManager(tiers="
@@ -576,10 +572,10 @@ class LabelManager(collections.MutableSet):
 
 #### End of methods required by abstract base class ####
 
-    def tier(self, id, castTo=None, shiftLabels='left'):
+    def tier(self, id, cast_to=None, shift_labels='left'):
         """Return the tier identified by id, which can be an integer index
 or the tier name."""
-# shiftLabels determines how label text associates to times.
+# shift_labels determines how label text associates to times.
 # Casting to PointTier:
 #    left: associate point label text with interval label's t1
 #    right: associate point label text with interval label's t2
@@ -596,39 +592,29 @@ or the tier name."""
                     break
         if tier == None:
             raise IndexError("Could not find a tier with given id.")
-        if castTo == "PointTier" and not isinstance(tier, PointTier):
+        if cast_to == "PointTier" and not isinstance(tier, PointTier):
             pttier = PointTier(start=tier.start, end=tier.end, name=tier.name)
             for lab in tier:
                 ptlab = copy.deepcopy(lab)
-                if shiftLabels == 'left':
+                if shift_labels == 'left':
 # FIXME: don't use private attribute
-                    ptlab._t1 = ptlab.t2()
+                    ptlab._t1 = ptlab.t2
 # FIXME: don't use private attribute
                 ptlab._t2 = None
                 pttier.add(ptlab)
             tier = pttier
-        elif castTo == "IntervalTier" and not isinstance(tier, IntervalTier):
+        elif cast_to == "IntervalTier" and not isinstance(tier, IntervalTier):
             inttier = IntervalTier(start=tier.start, end=tier.end, name=tier.name)
             for lab in tier:
                 intlab = copy.deepcopy(lab)
-                if shiftLabels == 'left':
+                if shift_labels == 'left':
 # FIXME: don't use private attribute
-                    intlab._t2 = intlab.t1()
+                    intlab._t2 = intlab.t1
                 else:
                     pass
                 inttier.add(intlab)
             tier = inttier
         return tier
-
-    # Get the label occurring at time t from specified tier (default 0). The
-    # tier may identified by its index or name.
-#    def labelAt(self, t, tier=0, mode='closest', tol=None):
-#        """Get Label object at time t from tier."""
-#        return self.tier(tier).labelAt(t, mode=mode, tol=tol)
-
-#    def labels(self, tier=0):
-#        return self.tier(tier).labels()
-#        return self._tiers[tier]
 
     def names(self):
         """Return a tuple of tier names."""
@@ -636,9 +622,9 @@ or the tier name."""
 
     def labels_at(self, time, method='closest'):
         """Return a tuple of Label objects corresponding to the tiers at time."""
-        labels = tuple([tier.labelAt(time,method) for tier in self._tiers])
+        labels = tuple([tier.label_at(time,method) for tier in self._tiers])
 #        for tier in self._tiers:
-#            labels.append(tier.labelAt(time, method))
+#            labels.append(tier.label_at(time, method))
         names = self.names()
         # Check to make sure every tier name is valid (not empty, not
         # containing whitespace, not a duplicate). If one or more names is not
@@ -910,22 +896,22 @@ guessed."""
                 tier.add(Label(text=text, t1=t1, t2=t2))
             self.add(tier)                
 
-    def read_table(self, filename, sep='\t', fieldsInHead=True,
-                  t1Col='t1', t2Col='t2', fields=None, skipN=0):
+    def read_table(self, filename, sep='\t', fields_in_head=True,
+                  t1col='t1', t2col='t2', fields=None, skiplines=0):
         """Generic reader for tabular file data."""
         with open(filename, 'rb') as f:
-            for skip in range(skipN):
+            for skip in range(skiplines):
                 f.readline()
-            if fieldsInHead:
+            if fields_in_head:
                 fields = f.readline().rstrip().split(sep)
             else:
                 fields = [fld.strip() for fld in fields.split(',')]
             tiers = []
-            t1idx = fields.index(t1Col)
+            t1idx = fields.index(t1col)
             fields[t1idx] = 't1'
             t2idx = None
-            if t2Col in fields:
-                t2idx = fields.index(t2Col)
+            if t2col in fields:
+                t2idx = fields.index(t2col)
                 fields[t2idx] = 't2'
                 for fld in fields:
                     if fld == 't1' or fld == 't2': continue
@@ -962,7 +948,7 @@ if __name__ == '__main__':
 
 #    samplefile='C:\\src\\42_00_06_24_lynn_42.TextGrid'
 #    lm2 = LabelManager()
-#    lm2.readPraatLong(samplefile)
+#    lm2.read_praat_long(samplefile)
 #    print lm2.tier('word').search('^she$')
 
 
@@ -970,24 +956,24 @@ if __name__ == '__main__':
 #    lm4 = LabelManager()
 #    lm4.read_esps(samplefile)
 #    print lm4.tier(0).search('SIL')
-#    print lm4.labelsAt(1)
+#    print lm4.labels_at(1)
 
 #    samplefile='C:\\src\\phonlab\\annopy\\data\\wavesurfer1.lab'
 #    lm5 = LabelManager()
 #    lm5.read_wavesurfer(samplefile)
 #
-#    lm = LabelManager(fromFile='test/this_is_a_label_file.short.TextGrid', fromType='praat_short')
+#    lm = LabelManager(from_file='test/this_is_a_label_file.short.TextGrid', from_type='praat_short')
 #    lm._get_praat_header()
 #    vre = re.compile(
 #         "(?P<vowel>zh|zhw|i|in|e|u|eu|ae|a)(?P<stress>\d)?"
 #    )
-#    um = LabelManager(fromFile='c:/users/ronald/downloads/jiangbei-15.TextGrid', fromType='praat')
-#    am = LabelManager(fromFile='c:/users/ronald/downloads/jiangbei-15_v.TextGrid', fromType='praat')
-#    ul = um.tier('vowel').search(vre, returnMatch=True)
-#    al = am.tier('vowel').search(vre, returnMatch=True)
+#    um = LabelManager(from_file='c:/users/ronald/downloads/jiangbei-15.TextGrid', from_type='praat')
+#    am = LabelManager(from_file='c:/users/ronald/downloads/jiangbei-15_v.TextGrid', from_type='praat')
+#    ul = um.tier('vowel').search(vre, return_match=True)
+#    al = am.tier('vowel').search(vre, return_match=True)
 #    tempifc = 'c:/users/ronald/Desktop/t.txt'
-#    ifc = LabelManager(fromFile=tempifc, fromType='table', t1Col='sec')
-#    meas = ifc.labelsAt(0.15)
+#    ifc = LabelManager(from_file=tempifc, from_type='table', t1col='sec')
+#    meas = ifc.labels_at(0.15)
     pass
-#    lm = LabelManager(fromFile='test/Turkmen_NA_20130919_G_3.TextGrid', fromType='praat')
+#    lm = LabelManager(from_file='test/Turkmen_NA_20130919_G_3.TextGrid', from_type='praat')
     #pass
