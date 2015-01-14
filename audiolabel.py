@@ -189,18 +189,18 @@ from an iterable."""
         '''Allow indexing of tier like a list.'''
         return self._list[key]
 
-    def prev(self, label):
-        """Return the label preceding label."""
-        idx = self._list.index(label) - 1
+    def prev(self, label, skip=0):
+        """Return the label preceding label. Use the skip parameter to return an earlier label, e.g. skip=1 returns the second preceding label."""
+        idx = self._list.index(label) - skip - 1
         try:
             label = self._list[idx]
         except IndexError:
             label = None
         return label
           
-    def next(self, label):
-        """Return the label following label."""
-        idx = self._list.index(label) + 1
+    def next(self, label, skip=0):
+        """Return the label following label. Use the skip parameter to return a later label, e.g. skip=1 returns the second label after label."""
+        idx = self._list.index(label) + skip + 1
         try:
             label = self._list[idx]
         except IndexError:
