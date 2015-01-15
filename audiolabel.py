@@ -484,6 +484,11 @@ class LabelManager(collections.MutableSet):
             elif from_type == 'table':
                 self.read_table(from_file, **kwargs)
               
+    @property
+    def names(self):
+        """Return a tuple of tier names."""
+        return tuple([tier.name for tier in self._tiers])
+
     def __repr__(self):
         s = "LabelManager(tiers="
         if len(self._tiers) > 0:
@@ -616,22 +621,18 @@ or the tier name."""
             tier = inttier
         return tier
 
-    def names(self):
-        """Return a tuple of tier names."""
-        return tuple([tier.name for tier in self._tiers])
-
     def labels_at(self, time, method='closest'):
         """Return a tuple of Label objects corresponding to the tiers at time."""
         labels = tuple([tier.label_at(time,method) for tier in self._tiers])
 #        for tier in self._tiers:
 #            labels.append(tier.label_at(time, method))
-        names = self.names()
+        names = self.names
         # Check to make sure every tier name is valid (not empty, not
         # containing whitespace, not a duplicate). If one or more names is not
         # valid, return a regular tuple instead of a namedtuple.
         if '' not in names and None not in names:
             seen = []
-            for name in self.names():
+            for name in self.names:
                 if re.compile('\s').search(name) or name in seen:
                     labels = tuple(labels)
                     break
@@ -862,7 +863,7 @@ guessed."""
         # line, end-of-header line, and empty/comment label lines.
         separator = re.compile('separator\s+(.+)')
         end_head = re.compile('^#')
-        empty_line = re.compile('^\s*#?.*$')
+        empty_line = re.compile('^\s*(#.*)?$')
         
         with open(filename, 'rb') as f:
             while True:        # Process the header.
@@ -896,46 +897,63 @@ guessed."""
                 tier.add(Label(text=text, t1=t1, t2=t2))
             self.add(tier)                
 
-    def read_table(self, filename, sep='\t', fields_in_head=True,
-                  t1col='t1', t2col='t2', fields=None, skiplines=0):
-        """Generic reader for tabular file data."""
-        with open(filename, 'rb') as f:
-            for skip in range(skiplines):
-                f.readline()
-            if fields_in_head:
-                fields = f.readline().rstrip().split(sep)
-            else:
-                fields = [fld.strip() for fld in fields.split(',')]
-            tiers = []
-            t1idx = fields.index(t1col)
+    def read_table(self, infile, sep='\t', fields_in_head=True,
+                  t1_col='t1', t2_col='t2', fields=None, skiplines=0,
+                  t1_start=0, t1_step=1):
+        """Generic reader for tabular file data. infile can be a filename or open file handle. If t1Col is None, automatically create a t1 index with first value t1_start and adding t1_step for subsequent values."""
+        try:
+            f = open(infile, 'rb')
+        except TypeError as e:  # infile should already be a file handle
+            f = infile
+
+        for skip in range(skiplines):
+            f.readline()
+
+        # Process field names.
+        if fields_in_head:
+            fields = f.readline().rstrip().split(sep)
+        else:
+            fields = [fld.strip() for fld in fields.split(',')]
+        tiers = []
+        if t1_col == None:
+            t1idx = None
+        else:
+            t1idx = fields.index(t1_col)
             fields[t1idx] = 't1'
-            t2idx = None
-            if t2col in fields:
-                t2idx = fields.index(t2col)
-                fields[t2idx] = 't2'
-                for fld in fields:
-                    if fld == 't1' or fld == 't2': continue
-                    tiers.append(IntervalTier(name=fld))
+        t2idx = None
+        if t2_col in fields:
+            t2idx = fields.index(t2_col)
+            fields[t2idx] = 't2'
+            for fld in fields:
+                if fld == 't1' or fld == 't2': continue
+                tiers.append(IntervalTier(name=fld))
+        else:
+            for fld in fields:
+                if fld == 't1': continue
+                tiers.append(PointTier(name=fld))
+
+        # Parse labels from rows.
+        t1 = t2 = tstart = tend = None
+        for idx, line in enumerate([l for l in f.readlines() if l != '']):
+            vals = line.rstrip('\r\n').split(sep)
+            if t1_col == None:
+                t1 = (idx * t1_step) + t1_start
             else:
-                for fld in fields:
-                    if fld == 't1': continue
-                    tiers.append(PointTier(name=fld))
-            t1 = t2 = tstart = tend = None
-            for line in f.readlines():
-                vals = line.rstrip('\n').split(sep)
                 t1 = vals.pop(t1idx)
-                if tstart == None: tstart = t1
-                if t2idx != None: t2 = vals.pop(t2idx)
-                for tier, val in zip(tiers, vals):
-                    tier.add(Label(text=val, t1=t1, t2=t2))
-            if t2 == None:
-                tend = t1
-            else:
-                tend = t2
-            for tier in tiers:
-                tier.start = tstart
-                tier.end = tend
-                self.add(tier)
+            if tstart == None: tstart = t1
+            if t2idx != None: t2 = vals.pop(t2idx)
+            for tier, val in zip(tiers, vals):
+                tier.add(Label(text=val, t1=t1, t2=t2))
+
+        # Finish the tier.
+        if t2 == None:
+            tend = t1
+        else:
+            tend = t2
+        for tier in tiers:
+            tier.start = tstart
+            tier.end = tend
+            self.add(tier)
             
 
                 
@@ -972,7 +990,7 @@ if __name__ == '__main__':
 #    ul = um.tier('vowel').search(vre, return_match=True)
 #    al = am.tier('vowel').search(vre, return_match=True)
 #    tempifc = 'c:/users/ronald/Desktop/t.txt'
-#    ifc = LabelManager(from_file=tempifc, from_type='table', t1col='sec')
+#    ifc = LabelManager(from_file=tempifc, from_type='table', t1_col='sec')
 #    meas = ifc.labels_at(0.15)
     pass
 #    lm = LabelManager(from_file='test/Turkmen_NA_20130919_G_3.TextGrid', from_type='praat')
