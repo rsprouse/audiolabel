@@ -900,7 +900,9 @@ guessed."""
     def read_table(self, infile, sep='\t', fields_in_head=True,
                   t1_col='t1', t2_col='t2', fields=None, skiplines=0,
                   t1_start=0, t1_step=1):
-        """Generic reader for tabular file data. infile can be a filename or open file handle. If t1Col is None, automatically create a t1 index with first value t1_start and adding t1_step for subsequent values."""
+        """Generic reader for tabular file data. infile can be a filename or
+open file handle. If t1Col is None, automatically create a t1 index with
+first value t1_start and adding t1_step for subsequent values."""
         try:
             f = open(infile, 'rb')
         except TypeError as e:  # infile should already be a file handle
