@@ -37,6 +37,7 @@ def update_line(line):
     line = line.replace('t1Col', 't1_col')
     line = line.replace('t2Col', 't2_col')
     line = line.replace('skipN', 'skiplines')
+    line = line.replace('_asString', '_as_string')
     return line
 
 def main(fname):
