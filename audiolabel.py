@@ -477,6 +477,8 @@ class LabelManager(collections.MutableSet):
                 self.read_praat_long(from_file)
             elif from_type == 'praat_short':
                 self.read_praat_short(from_file)
+            elif from_type == 'eaf':
+                self.read_eaf(from_file)
             elif from_type == 'esps':
                 self.read_esps(from_file)
             elif from_type == 'wavesurfer':
@@ -844,6 +846,36 @@ guessed."""
             '<exists>',
             intervals
             ))
+
+    # TODO: this works for karuk .eaf files; need to find out whether this is sufficient for all
+    # .eaf files
+    # This implementation does not retain all of the possible dependencies between tiers.
+    def read_eaf(self, filename):
+        """Read an ELAN .eaf file."""
+        import xml.etree.ElementTree as ET
+        tree = ET.parse(filename)
+        root = tree.getroot()
+        time_slots = {}
+        annotations = {}
+        for ts in root.findall('./TIME_ORDER/TIME_SLOT'):
+            if ts.get('TIME_VALUE') != None:
+                time_slots[ts.get('TIME_SLOT_ID')] = ts.get('TIME_VALUE')
+        for eaftier in root.findall('./TIER'):
+            # TODO: does ELAN have point tiers?
+            tier = IntervalTier(name=eaftier.get('TIER_ID'))
+            for anno in eaftier.findall('ANNOTATION/ALIGNABLE_ANNOTATION'):
+                try:
+                    t1 = time_slots[anno.get('TIME_SLOT_REF1')]
+                    t2 = time_slots[anno.get('TIME_SLOT_REF2')]
+                except KeyError:
+                    reflabel = annotations[anno.get('ANNOTATION_REF')]
+                    t1 = reflabel.t1
+                    t2 = reflabel.t2
+                text = anno.find('ANNOTATION_VALUE').text
+                label = Label(text, t1=t1, t2=t2)
+                tier.add(label)
+                annotations[anno.get('ANNOTATION_id')] = label
+            self.add(tier)
 
     def read_esps(self, filename, sep=None):
         """Read an ESPS label file."""
