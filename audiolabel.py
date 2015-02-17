@@ -11,6 +11,7 @@ import codecs
 import collections
 import copy
 import re
+from __future__ import division
 
 # Some convenience functions to be used in the classes.
 
@@ -859,6 +860,13 @@ guessed."""
         time_slots = root.find('./TIME_ORDER')
         for eaftier in root.findall('./TIER'):
             tier = IntervalTier(name=eaftier.get('TIER_ID'))
+            # Time subdivision tiers have sequences of annotations that
+            # subdivide a parent tier's duration. The individual annotations
+            # may have empty time slots. The first element in the sequence
+            # shares the parent tier's first time slot, and the last element
+            # of the sequence shares the parent's last time slot. All other
+            # time slots are empty.
+            anno_run = []
             for anno in eaftier.findall('ANNOTATION/*'):
                 if anno.tag == 'ALIGNABLE_ANNOTATION':
                     t_anno = anno
@@ -875,8 +883,16 @@ guessed."""
                     times.append(time_slots.find(xpath).get('TIME_VALUE'))
                 text = anno.find('ANNOTATION_VALUE').text
                 try:
-                    label = Label(text, t1=times[0], t2=times[1])
-                    tier.add(label)
+                anno_run.append(Label(text, t1=times[0], t2=times[1]))
+                if times[1] != None:     # end of run
+                    step = (anno_run[-1].t2 - anno_run[0].t1) / len(anno_run)
+                    for idx,label in enumerate(anno_run):
+                        if label.t1 == None:
+                            label.t1 == anno_run[0].t1 + round(idx * step)
+                        if label.t2 == None:
+                            label.t2 == anno_run[0].t2 + round((idx + 1) * step)
+                        tier.add(label)
+                    anno_run = []
                 except LabelTimeValueError:
                     print "Warning: missing time value for label with value '{}'.".format(text)
             self.add(tier)
