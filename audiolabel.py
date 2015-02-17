@@ -906,9 +906,9 @@ guessed."""
                     step = (anno_run[-1].t2 - anno_run[0].t1) / len(anno_run)
                     for idx,label in enumerate(anno_run):
                         if label.t1 == None:
-                            label.t1 == anno_run[0].t1 + round(idx * step)
+                            label.t1 = anno_run[0].t1 + round(idx * step)
                         if label.t2 == None:
-                            label.t2 == anno_run[0].t1 + round((idx + 1) * step)
+                            label.t2 = anno_run[0].t1 + round((idx + 1) * step)
                         tier.add(label)
                     anno_run = []
             self.add(tier)
