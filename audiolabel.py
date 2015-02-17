@@ -52,9 +52,9 @@ class Label(object):
     """An individual annotation."""
     
     def __init__(self, text='', t1=None, t2=None, appdata=None, metadata=None,
-                 codec='utf_8', *args, **kwargs):
+                 codec='utf_8', strict=True, *args, **kwargs):
         super(Label, self).__init__()
-        if t1 == None:
+        if t1 == None and strict==True:
             raise LabelTimeValueError('Missing t1 argument in __init__().')
         self._t1 = float(t1)  # Cast from string to be friendly.
         if t2 == None:
