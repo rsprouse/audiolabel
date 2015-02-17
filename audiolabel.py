@@ -899,9 +899,24 @@ guessed."""
                     xpath = "./TIME_SLOT/[@TIME_SLOT_ID='{}']".format(ref)
                     times.append(time_slots.find(xpath).get('TIME_VALUE'))
                 text = anno.find('ANNOTATION_VALUE').text
-                anno_run.append(
-                    Label(text, t1=times[0], t2=times[1], strict=False)
-                )
+                # TODO: read encoding from xml document instead of hardcoding
+                # utf_8?
+                try:
+                    l = Label(
+                              text.decode('utf_8'),
+                              t1=times[0],
+                              t2=times[1],
+                              strict=False
+                        )
+                # TODO: this will default text to '' instead of None. Is there a
+                # need to retain None?
+                except AttributeError:   # text == None
+                    l = Label(
+                              t1=times[0],
+                              t2=times[1],
+                              strict=False
+                        )
+                anno_run.append(l)
                 if times[1] != None:     # end of run
                     step = (anno_run[-1].t2 - anno_run[0].t1) / len(anno_run)
                     for idx,label in enumerate(anno_run):
