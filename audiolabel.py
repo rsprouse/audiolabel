@@ -6,12 +6,13 @@ Created on Fri May 10 13:29:26 2013
 @version: 0.2.0
 """
 
+from __future__ import division
+
 import numpy as np
 import codecs
 import collections
 import copy
 import re
-from __future__ import division
 
 # Some convenience functions to be used in the classes.
 
