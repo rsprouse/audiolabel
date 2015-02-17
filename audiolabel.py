@@ -66,6 +66,7 @@ class Label(object):
             self._t2 = None
         self.text = text
         self._codec = codec
+        self.strict = strict
         self.appdata = appdata     # Container for app-specific data not used
                                    # by this class.
         
@@ -97,11 +98,23 @@ class Label(object):
         """Return the first (possibly only) timepoint of the Label."""
         return self._t1
 
+    @t1.setter
+    def t1(self, t1):
+        if self.strict == True:
+            raise LabelTimeValueError("Cannot directly set t1 in strict mode.")
+        self._t1 = t1
+
     @property
     def t2(self):
         """Return the second timepoint of the Label."""
         return self._t2
         
+    @t2.setter
+    def t2(self, t2):
+        if self.strict == True:
+            raise LabelTimeValueError("Cannot directly set t2 in strict mode.")
+        self._t2 = t2
+
     @property
     def duration(self):
         """Return the duration of the label, or np.nan if the label represents a point
