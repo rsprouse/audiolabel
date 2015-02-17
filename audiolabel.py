@@ -882,7 +882,6 @@ guessed."""
                     xpath = "./TIME_SLOT/[@TIME_SLOT_ID='{}']".format(ref)
                     times.append(time_slots.find(xpath).get('TIME_VALUE'))
                 text = anno.find('ANNOTATION_VALUE').text
-                try:
                 anno_run.append(Label(text, t1=times[0], t2=times[1]))
                 if times[1] != None:     # end of run
                     step = (anno_run[-1].t2 - anno_run[0].t1) / len(anno_run)
