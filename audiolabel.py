@@ -892,8 +892,6 @@ guessed."""
                             label.t2 == anno_run[0].t2 + round((idx + 1) * step)
                         tier.add(label)
                     anno_run = []
-                except LabelTimeValueError:
-                    print "Warning: missing time value for label with value '{}'.".format(text)
             self.add(tier)
 
     def read_esps(self, filename, sep=None):
