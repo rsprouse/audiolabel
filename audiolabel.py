@@ -858,7 +858,6 @@ guessed."""
         root = tree.getroot()
         time_slots = root.find('./TIME_ORDER')
         for eaftier in root.findall('./TIER'):
-            # TODO: does ELAN have point tiers?
             tier = IntervalTier(name=eaftier.get('TIER_ID'))
             for anno in eaftier.findall('ANNOTATION/*'):
                 if anno.tag == 'ALIGNABLE_ANNOTATION':
