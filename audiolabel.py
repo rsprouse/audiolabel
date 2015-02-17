@@ -56,11 +56,14 @@ class Label(object):
         super(Label, self).__init__()
         if t1 == None and strict==True:
             raise LabelTimeValueError('Missing t1 argument in __init__().')
-        self._t1 = float(t1)  # Cast from string to be friendly.
-        if t2 == None:
-             self._t2 = t2  # This can be empty for point labels.
-        else:
+        try:
+            self._t1 = float(t1)  # Cast from string to be friendly.
+        except TypeError:         # t1 == None
+            self._t1 = None
+        try:
              self._t2 = float(t2)
+        except TypeError:         # t2 == None
+            self._t2 = None
         self.text = text
         self._codec = codec
         self.appdata = appdata     # Container for app-specific data not used
