@@ -852,29 +852,34 @@ guessed."""
     # This implementation does not retain all of the possible dependencies between tiers.
     def read_eaf(self, filename):
         """Read an ELAN .eaf file."""
+
         import xml.etree.ElementTree as ET
         tree = ET.parse(filename)
         root = tree.getroot()
-        time_slots = {}
-        annotations = {}
-        for ts in root.findall('./TIME_ORDER/TIME_SLOT'):
-            if ts.get('TIME_VALUE') != None:
-                time_slots[ts.get('TIME_SLOT_ID')] = ts.get('TIME_VALUE')
+        time_slots = root.find('./TIME_ORDER')
         for eaftier in root.findall('./TIER'):
             # TODO: does ELAN have point tiers?
             tier = IntervalTier(name=eaftier.get('TIER_ID'))
-            for anno in eaftier.findall('ANNOTATION/ALIGNABLE_ANNOTATION'):
-                try:
-                    t1 = time_slots[anno.get('TIME_SLOT_REF1')]
-                    t2 = time_slots[anno.get('TIME_SLOT_REF2')]
-                except KeyError:
-                    reflabel = annotations[anno.get('ANNOTATION_REF')]
-                    t1 = reflabel.t1
-                    t2 = reflabel.t2
+            for anno in eaftier.findall('ANNOTATION/*'):
+                if anno.tag == 'ALIGNABLE_ANNOTATION':
+                    t_anno = anno
+                elif anno.tag == 'REF_ANNOTATION':
+                    ref = anno.get('ANNOTATION_REF')
+                    xpath = ".//ANNOTATION/ALIGNABLE_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
+                    t_anno = root.find(xpath)
+                else:
+                    raise RunTimeError, "Unrecognized annotation type."
+                times = []
+                for idx in ['1', '2']:
+                    ref = t_anno.get('TIME_SLOT_REF{}'.format(idx))
+                    xpath = "./TIME_SLOT/[@TIME_SLOT_ID='{}']".format(ref)
+                    times.append(time_slots.find(xpath).get('TIME_VALUE'))
                 text = anno.find('ANNOTATION_VALUE').text
-                label = Label(text, t1=t1, t2=t2)
-                tier.add(label)
-                annotations[anno.get('ANNOTATION_id')] = label
+                try:
+                    label = Label(text, t1=times[0], t2=times[1])
+                    tier.add(label)
+                except LabelTimeValueError:
+                    print "Warning: missing time value for label with value '{}'.".format(text)
             self.add(tier)
 
     def read_esps(self, filename, sep=None):
