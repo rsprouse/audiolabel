@@ -650,6 +650,16 @@ or the tier name."""
             labels = Ret(*labels)
         return labels
             
+    def scale_by(self, factor):
+        """Multiply all annotation times in all tiers by a factor."""
+        for tier in self._tiers:
+            tier.scale_by(factor)
+
+    def shift_by(self, t):
+        """Add a constant to all annotation times in all tiers."""
+        for tier in self._tiers:
+            tier.shift_by(t)
+
     def _guess_praat_encoding(self, firstline):
         '''Guess and return the encoding of a file from the BOM. Limited to 'utf_8',
 'utf_16_be', and 'utf_16_le'. Assume 'ascii' if no BOM.'''
