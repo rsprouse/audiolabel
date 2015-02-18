@@ -280,11 +280,13 @@ from an iterable."""
         """Multiply all annotation times by a factor."""
         for item in self:
             item._scale_by(factor)
+        self._time *= factor
 
     def shift_by(self, t):
         """Add a constant to all annotation times."""
         for item in self:
             item._shift_by(t)
+        self._time += t
 
     # TODO: come up with a good name and calling convention, then make 
     # this a normal (non-hidden) method; change in subclasses too.
