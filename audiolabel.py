@@ -898,20 +898,17 @@ guessed."""
                 text = anno.find('ANNOTATION_VALUE').text
                 # TODO: read encoding from xml document instead of hardcoding
                 # utf_8?
-                # TODO: is int() the right thing to use, or float()?
-                # .eaf format doesn't require int, but elan as implemented
-                # creates times with integer millisecond values
                 l = {}
                 try:
                     l['text'] = text.decode('utf_8')
                 except AttributeError:
-                    l['text'] = None
+                    l['text'] = ''
                 try:
-                    l['t1'] = int(times[0])
+                    l['t1'] = float(times[0])
                 except TypeError:
                     l['t1'] = None
                 try:
-                    l['t2'] = int(times[1])
+                    l['t2'] = float(times[1])
                 except TypeError:
                     l['t2'] = None
                 anno_run.append(l)
