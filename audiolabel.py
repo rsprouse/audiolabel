@@ -901,30 +901,31 @@ guessed."""
                 text = anno.find('ANNOTATION_VALUE').text
                 # TODO: read encoding from xml document instead of hardcoding
                 # utf_8?
+                # TODO: is int() the right thing to use, or float()?
+                # .eaf format doesn't require int, but elan as implemented
+                # creates times with integer millisecond values
+                l = {}
                 try:
-                    l = Label(
-                              text.decode('utf_8'),
-                              t1=times[0],
-                              t2=times[1],
-                              strict=False
-                        )
-                # TODO: this will default text to '' instead of None. Is there a
-                # need to retain None?
-                except AttributeError:   # text == None
-                    l = Label(
-                              t1=times[0],
-                              t2=times[1],
-                              strict=False
-                        )
+                    l['text'] = text.decode('utf_8')
+                except AttributeError:
+                    l['text'] = None
+                try:
+                    l['t1'] = int(times[0])
+                except TypeError:
+                    l['t1'] = None
+                try:
+                    l['t2'] = int(times[1])
+                except TypeError:
+                    l['t2'] = None
                 anno_run.append(l)
                 if times[1] != None:     # end of run
-                    step = (anno_run[-1].t2 - anno_run[0].t1) / len(anno_run)
+                    step = (anno_run[-1]['t2'] - anno_run[0]['t1']) / len(anno_run)
                     for idx,label in enumerate(anno_run):
-                        if label.t1 == None:
-                            label.t1 = anno_run[0].t1 + round(idx * step)
-                        if label.t2 == None:
-                            label.t2 = anno_run[0].t1 + round((idx + 1) * step)
-                        tier.add(label)
+                        if label['t1'] == None:
+                            label['t1'] = anno_run[0]['t1'] + round(idx * step)
+                        if label['t2'] == None:
+                            label['t2'] = anno_run[0]['t1'] + round((idx + 1) * step)
+                        tier.add(Label(**label))
                     anno_run = []
             self.add(tier)
 
