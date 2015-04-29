@@ -324,7 +324,7 @@ class PointTier(_LabelTier):
                 lab = '\n'.join((
                     "        points [{:d}]:".format(idx+1),
                     "            number = {:1.20f}".format(lab.t1),
-                    '            mark = "{:s}"'.format(lab.text)
+                    '            mark = "{:s}"'.format(re.sub('"', '""', lab.text))
                 ))
                 labels.append(lab)
             return '\n'.join(labels)
@@ -386,11 +386,15 @@ class IntervalTier(_LabelTier):
                 "        intervals: size = {:d}".format(len(self))
             ]
             for idx,lab in enumerate(self._list):
+                try:
+                    ltext = re.sub('"', '""', lab.text.encode(lab._codec))
+                except AttributeError:
+                    ltext = ''
                 lab = '\n'.join((
                     "        intervals [{:d}]:".format(idx+1),
                     "            xmin = {:1.20f}".format(lab.t1),
                     "            xmax = {:1.20f}".format(lab.t2),
-                    '            text = "{:s}"'.format(lab.text)
+                    '            text = "{:s}"'.format(ltext)
                 ))
                 labels.append(lab)
             return '\n'.join(labels)
@@ -472,20 +476,20 @@ class LabelManager(collections.MutableSet):
     """Manage one or more Tier objects."""
     
     def __init__(self, appdata=None, from_file=None, from_type=None,
-                 *args, **kwargs):
+                 codec=None, *args, **kwargs):
         super(LabelManager, self).__init__()
         self._tiers = []
         # Container for app-specific data not managed by this class.
         self.appdata = appdata
         if from_file != None:
             if from_type == 'praat':
-                self.read_praat(from_file)
+                self.read_praat(from_file, codec=codec)
             elif from_type == 'praat_long':
-                self.read_praat_long(from_file)
+                self.read_praat_long(from_file, codec=codec)
             elif from_type == 'praat_short':
-                self.read_praat_short(from_file)
+                self.read_praat_short(from_file, codec=codec)
             elif from_type == 'eaf':
-                self.read_eaf(from_file)
+                self.read_eaf(from_file, codec=codec)
             elif from_type == 'esps':
                 self.read_esps(from_file)
             elif from_type == 'wavesurfer':
@@ -867,22 +871,35 @@ guessed."""
     # TODO: this works for karuk .eaf files; need to find out whether this is sufficient for all
     # .eaf files
     # This implementation does not retain all of the possible dependencies between tiers.
-    def read_eaf(self, filename):
+    def read_eaf(self, filename, codec='utf_8'):
         """Read an ELAN .eaf file."""
+        # TODO: read encoding from xml document instead of hardcoding
+        # utf_8?
 
         import xml.etree.ElementTree as ET
         tree = ET.parse(filename)
         root = tree.getroot()
-        time_slots = root.find('./TIME_ORDER')
+        # Time subdivision tiers have sequences of annotations that
+        # subdivide a parent tier's duration. The individual annotations
+        # may have empty time slots. The first element in the sequence
+        # shares the parent tier's first time slot, and the last element
+        # of the sequence shares the parent's last time slot. All other
+        # time slots are empty.
+        tslots = {}
+        slot_run = []
+        for slot in root.findall('.//TIME_ORDER/TIME_SLOT'):
+            slot_run.append(slot)
+            if slot.get('TIME_VALUE'):
+                first = float(slot_run[0].get('TIME_VALUE'))
+                last = float(slot_run[-1].get('TIME_VALUE'))
+                step = (last - first) / len(slot_run)
+                for idx,runslot in enumerate(slot_run):
+                    slot_id = runslot.get('TIME_SLOT_ID')
+                    tslots[slot_id] = first + round(idx * step)
+                slot_run = [slot_run[-1]]
+
         for eaftier in root.findall('./TIER'):
             tier = IntervalTier(name=eaftier.get('TIER_ID'))
-            # Time subdivision tiers have sequences of annotations that
-            # subdivide a parent tier's duration. The individual annotations
-            # may have empty time slots. The first element in the sequence
-            # shares the parent tier's first time slot, and the last element
-            # of the sequence shares the parent's last time slot. All other
-            # time slots are empty.
-            anno_run = []
             for anno in eaftier.findall('ANNOTATION/*'):
                 if anno.tag == 'ALIGNABLE_ANNOTATION':
                     t_anno = anno
@@ -892,37 +909,27 @@ guessed."""
                     t_anno = root.find(xpath)
                 else:
                     raise RunTimeError, "Unrecognized annotation type."
-                times = []
-                for idx in ['1', '2']:
-                    ref = t_anno.get('TIME_SLOT_REF{}'.format(idx))
-                    xpath = "./TIME_SLOT/[@TIME_SLOT_ID='{}']".format(ref)
-                    times.append(time_slots.find(xpath).get('TIME_VALUE'))
-                text = anno.find('ANNOTATION_VALUE').text
-                # TODO: read encoding from xml document instead of hardcoding
-                # utf_8?
                 l = {}
+                l['t1'] = float(tslots[t_anno.get('TIME_SLOT_REF1')])
+                l['t2'] = float(tslots[t_anno.get('TIME_SLOT_REF2')])
+                text = anno.find('ANNOTATION_VALUE').text
+#                l['text'] = '' if text is None else ''
+#ref = t_anno.get('TIME_SLOT_REF{}'.format(idx))
+
                 try:
-                    l['text'] = text.decode('utf_8')
+                    l['text'] = text
                 except AttributeError:
                     l['text'] = ''
-                try:
-                    l['t1'] = float(times[0])
-                except TypeError:
-                    l['t1'] = None
-                try:
-                    l['t2'] = float(times[1])
-                except TypeError:
-                    l['t2'] = None
-                anno_run.append(l)
-                if times[1] != None:     # end of run
-                    step = (anno_run[-1]['t2'] - anno_run[0]['t1']) / len(anno_run)
-                    for idx,label in enumerate(anno_run):
-                        if label['t1'] == None:
-                            label['t1'] = anno_run[0]['t1'] + round(idx * step)
-                        if label['t2'] == None:
-                            label['t2'] = anno_run[0]['t1'] + round((idx + 1) * step)
-                        tier.add(Label(**label))
-                    anno_run = []
+                tier.add(Label(codec=codec, **l))
+#                if times[1] != None:     # end of run
+#                    step = (anno_run[-1]['t2'] - anno_run[0]['t1']) / len(anno_run)
+#                    for idx,label in enumerate(anno_run):
+#                        if label['text'] is None:
+#                            label['text'] = ''
+#                        if label['t1'] is None:
+#                            label['t1'] = anno_run[0]['t1'] + round(idx * step)
+#                        if label['t2'] is None:
+#                            label['t2'] = anno_run[0]['t1'] + round((idx + 1) * step)
             self.add(tier)
 
     def read_esps(self, filename, sep=None):
