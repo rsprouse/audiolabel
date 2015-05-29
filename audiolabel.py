@@ -314,10 +314,10 @@ class PointTier(_LabelTier):
         """Return the tier as a string of type fmt."""
         if fmt == 'praat_long':
             labels = [
-                '        class: "TextTier"',
-                '        name: "{:s}"'.format(self.name),
-                "        xmin: {:0.12f}".format(self.start),
-                "        xmax: {:0.12f}".format(self.end),
+                '        class = "TextTier"',
+                '        name = "{:s}"'.format(self.name),
+                "        xmin = {:0.12f}".format(self.start),
+                "        xmax = {:0.12f}".format(self.end),
                 "        points: size = {:d}".format(len(self))
             ]
             for idx,lab in enumerate(self._list):
@@ -379,10 +379,10 @@ class IntervalTier(_LabelTier):
         """Return the tier as a string of type fmt."""
         if fmt == 'praat_long':
             labels = [
-                '        class: "IntervalTier"',
-                '        name: "{:s}"'.format(self.name),
-                "        xmin: {:0.12f}".format(self.start),
-                "        xmax: {:0.12f}".format(self.end),
+                '        class = "IntervalTier"',
+                '        name = "{:s}"'.format(self.name),
+                "        xmin = {:0.12f}".format(self.start),
+                "        xmax = {:0.12f}".format(self.end),
                 "        intervals: size = {:d}".format(len(self))
             ]
             for idx,lab in enumerate(self._list):
