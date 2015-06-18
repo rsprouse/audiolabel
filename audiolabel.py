@@ -913,14 +913,14 @@ guessed."""
                     xpath = ".//ANNOTATION/ALIGNABLE_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
                     t_anno = root.find(xpath)
                 else:
-                    raise RunTimeError, "Unrecognized annotation type."
+                    raise RuntimeError, "Unrecognized annotation type."
 
                 anno_run.append(anno.find('ANNOTATION_VALUE').text)
                 if start_t is None:
                     try:
                         start_t = float(tslots[t_anno.get('TIME_SLOT_REF1')])
                     except TypeError:
-                        raise RunTimeError, "Error parsing .eaf. Expected to start a new annotation sequence, but there is no time value."
+                        raise RuntimeError, "Error parsing .eaf. Expected to start a new annotation sequence, but there is no time value."
                 end_t = tslots[t_anno.get('TIME_SLOT_REF2')]
                 if end_t is not None:
                     end_t = float(end_t)
