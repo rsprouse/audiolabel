@@ -1,0 +1,67 @@
+# Some notes on parsing .eaf files:
+
+# Timeseries problem -- interleaving. One sentence starts at ts870 and ends at ts880, which is the same time as ts874. Another sentence starts at ts874 and ends at ts881.
+        <TIME_SLOT TIME_SLOT_ID="ts870" TIME_VALUE="440973"/> --|
+        <TIME_SLOT TIME_SLOT_ID="ts871"/>                       s1
+        <TIME_SLOT TIME_SLOT_ID="ts872"/>                       |
+        <TIME_SLOT TIME_SLOT_ID="ts873"/>                       |
+        <TIME_SLOT TIME_SLOT_ID="ts874" TIME_VALUE="443123"/> --|--------|
+        <TIME_SLOT TIME_SLOT_ID="ts875"/>                       |        |
+        <TIME_SLOT TIME_SLOT_ID="ts876"/>                       |        |
+        <TIME_SLOT TIME_SLOT_ID="ts877"/>                       |        |
+        <TIME_SLOT TIME_SLOT_ID="ts878"/>                       |        s2
+        <TIME_SLOT TIME_SLOT_ID="ts879"/>                       |        |
+        <TIME_SLOT TIME_SLOT_ID="ts880" TIME_VALUE="443123"/> --|        |
+        <TIME_SLOT TIME_SLOT_ID="ts881" TIME_VALUE="445799"/> -----------|
+
+# Transcription tier. Notice overlapping time slot references.
+    <TIER DEFAULT_LOCALE="en" LINGUISTIC_TYPE_REF="languagetranscription" TIER_ID="Transcription">
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a83" TIME_SLOT_REF1="ts870" TIME_SLOT_REF2="ts880">
+                <ANNOTATION_VALUE>//They were all glad.</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a84" TIME_SLOT_REF1="ts874" TIME_SLOT_REF2="ts881">
+                <ANNOTATION_VALUE>pa+púufich tú kun+'áv+eesh.</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+     </TIER>
+
+    <TIER DEFAULT_LOCALE="en" LINGUISTIC_TYPE_REF="DividedTranscription" PARENT_REF="Transcription" TIER_ID="TranscWords">
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1056" TIME_SLOT_REF1="ts870" TIME_SLOT_REF2="ts871">
+                <ANNOTATION_VALUE>They</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1057" TIME_SLOT_REF1="ts871" TIME_SLOT_REF2="ts872">
+                <ANNOTATION_VALUE>were</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1058" TIME_SLOT_REF1="ts872" TIME_SLOT_REF2="ts873">
+                <ANNOTATION_VALUE>all</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1059" TIME_SLOT_REF1="ts873" TIME_SLOT_REF2="ts880">
+                <ANNOTATION_VALUE>glad.</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1060" TIME_SLOT_REF1="ts874" TIME_SLOT_REF2="ts876">
+                <ANNOTATION_VALUE>pa+púufich</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1061" TIME_SLOT_REF1="ts876" TIME_SLOT_REF2="ts877">
+                <ANNOTATION_VALUE>tú</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+        <ANNOTATION>
+            <ALIGNABLE_ANNOTATION ANNOTATION_ID="a1062" TIME_SLOT_REF1="ts877" TIME_SLOT_REF2="ts881">
+                <ANNOTATION_VALUE>kun+'áv+eesh.</ANNOTATION_VALUE>
+            </ALIGNABLE_ANNOTATION>
+        </ANNOTATION>
+    </TIER> 

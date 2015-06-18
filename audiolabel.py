@@ -886,20 +886,25 @@ guessed."""
         # of the sequence shares the parent's last time slot. All other
         # time slots are empty.
         tslots = {}
-        slot_run = []
+        #!slot_run = []
         for slot in root.findall('.//TIME_ORDER/TIME_SLOT'):
-            slot_run.append(slot)
-            if slot.get('TIME_VALUE'):
-                first = float(slot_run[0].get('TIME_VALUE'))
-                last = float(slot_run[-1].get('TIME_VALUE'))
-                step = (last - first) / len(slot_run)
-                for idx,runslot in enumerate(slot_run):
-                    slot_id = runslot.get('TIME_SLOT_ID')
-                    tslots[slot_id] = first + round(idx * step)
-                slot_run = [slot_run[-1]]
+        #!    slot_run.append(slot)
+            slot_id = slot.get('TIME_SLOT_ID')
+            tslots[slot_id] = slot.get('TIME_VALUE')
+        #!    if slot.get('TIME_VALUE'):
+        #!        first = float(slot_run[0].get('TIME_VALUE'))
+        #!        last = float(slot_run[-1].get('TIME_VALUE'))
+        #!        step = (last - first) / len(slot_run)
+        #!        for idx,runslot in enumerate(slot_run):
+        #!            slot_id = runslot.get('TIME_SLOT_ID')
+        #!            tslots[slot_id] = first + round(idx * step)
+        #!        slot_run = [slot_run[-1]]
 
         for eaftier in root.findall('./TIER'):
             tier = IntervalTier(name=eaftier.get('TIER_ID'))
+            anno_run = []
+            start_t = None
+            end_t = None
             for anno in eaftier.findall('ANNOTATION/*'):
                 if anno.tag == 'ALIGNABLE_ANNOTATION':
                     t_anno = anno
@@ -909,27 +914,29 @@ guessed."""
                     t_anno = root.find(xpath)
                 else:
                     raise RunTimeError, "Unrecognized annotation type."
-                l = {}
-                l['t1'] = float(tslots[t_anno.get('TIME_SLOT_REF1')])
-                l['t2'] = float(tslots[t_anno.get('TIME_SLOT_REF2')])
-                text = anno.find('ANNOTATION_VALUE').text
-#                l['text'] = '' if text is None else ''
-#ref = t_anno.get('TIME_SLOT_REF{}'.format(idx))
 
-                try:
-                    l['text'] = text
-                except AttributeError:
-                    l['text'] = ''
-                tier.add(Label(codec=codec, **l))
-#                if times[1] != None:     # end of run
-#                    step = (anno_run[-1]['t2'] - anno_run[0]['t1']) / len(anno_run)
-#                    for idx,label in enumerate(anno_run):
-#                        if label['text'] is None:
-#                            label['text'] = ''
-#                        if label['t1'] is None:
-#                            label['t1'] = anno_run[0]['t1'] + round(idx * step)
-#                        if label['t2'] is None:
-#                            label['t2'] = anno_run[0]['t1'] + round((idx + 1) * step)
+                anno_run.append(anno.find('ANNOTATION_VALUE').text)
+                if start_t is None:
+                    try:
+                        start_t = float(tslots[t_anno.get('TIME_SLOT_REF1')])
+                    except TypeError:
+                        raise RunTimeError, "Error parsing .eaf. Expected to start a new annotation sequence, but there is no time value."
+                end_t = tslots[t_anno.get('TIME_SLOT_REF2')]
+                if end_t is not None:
+                    end_t = float(end_t)
+                    step = (end_t - start_t) / len(anno_run)
+                    anno_run = ['' if x is None else x for x in anno_run]
+                    for idx,label in enumerate(anno_run):
+                        t1 = start_t
+                        t2 = start_t + round((idx + 1) * step)
+                        if idx > 0:
+                            t1 += round(idx * step)
+                        if idx == (len(anno_run) - 1):
+                            t2 = end_t
+                        tier.add(Label(text=label, t1=t1, t2=t2, codec=codec))
+                    anno_run = []
+                    start_t = None
+                    end_t = None
             self.add(tier)
 
     def read_esps(self, filename, sep=None):
