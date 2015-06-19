@@ -903,13 +903,20 @@ guessed."""
                     tiersort.append(name)
                     tkeys.remove(name)
 
+        # Preserve tier order.
+        for idx,eaftier in enumerate(root.findall('./TIER')):
+            tier = IntervalTier(name=eaftier.get('TIER_ID'))
+            self.add(tier)
+
+        # Process labels on parent tiers before dependent tiers so that
+        # timeslots are filled in properly in the dependents.
         for name in tiersort:
-            eaftier = root.find(".//TIER/[@TIER_ID='{}']".format(name))
-            tier = IntervalTier(name=name)
+            tier = self.tier(name)
             anno_run = []
             tslot_run = []
             start_t = None
             end_t = None
+            eaftier = root.find(".//TIER/[@TIER_ID='{}']".format(name))
             for anno in eaftier.findall('ANNOTATION/*'):
                 if anno.tag == 'ALIGNABLE_ANNOTATION':
                     t_anno = anno
@@ -945,7 +952,6 @@ guessed."""
                     tslot_run = []
                     start_t = None
                     end_t = None
-            self.add(tier)
 
     def read_esps(self, filename, sep=None):
         """Read an ESPS label file."""
