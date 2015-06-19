@@ -886,23 +886,28 @@ guessed."""
         # of the sequence shares the parent's last time slot. All other
         # time slots are empty.
         tslots = {}
-        #!slot_run = []
         for slot in root.findall('.//TIME_ORDER/TIME_SLOT'):
-        #!    slot_run.append(slot)
             slot_id = slot.get('TIME_SLOT_ID')
             tslots[slot_id] = slot.get('TIME_VALUE')
-        #!    if slot.get('TIME_VALUE'):
-        #!        first = float(slot_run[0].get('TIME_VALUE'))
-        #!        last = float(slot_run[-1].get('TIME_VALUE'))
-        #!        step = (last - first) / len(slot_run)
-        #!        for idx,runslot in enumerate(slot_run):
-        #!            slot_id = runslot.get('TIME_SLOT_ID')
-        #!            tslots[slot_id] = first + round(idx * step)
-        #!        slot_run = [slot_run[-1]]
 
-        for eaftier in root.findall('./TIER'):
-            tier = IntervalTier(name=eaftier.get('TIER_ID'))
+        # Sort the tier names so that parent tiers are processed, and their
+        # time slots filled out, before their children. That way we can
+        # calculate time values for the empty time slots before they are
+        # needed in the children.
+        tmap = {tier.get('TIER_ID'): tier.get('PARENT_REF') for tier in root.findall('./TIER')}
+        tiersort = []
+        tkeys = tmap.keys()
+        while len(tkeys) > 0:
+            for name in tkeys:
+                if tmap[name] is None or tmap[name] in tiersort:
+                    tiersort.append(name)
+                    tkeys.remove(name)
+
+        for name in tiersort:
+            eaftier = root.find(".//TIER/[@TIER_ID='{}']".format(name))
+            tier = IntervalTier(name=name)
             anno_run = []
+            tslot_run = []
             start_t = None
             end_t = None
             for anno in eaftier.findall('ANNOTATION/*'):
@@ -916,6 +921,7 @@ guessed."""
                     raise RuntimeError, "Unrecognized annotation type."
 
                 anno_run.append(anno.find('ANNOTATION_VALUE').text)
+                tslot_run.append(t_anno.get('TIME_SLOT_REF1'))
                 if start_t is None:
                     try:
                         start_t = float(tslots[t_anno.get('TIME_SLOT_REF1')])
@@ -931,10 +937,12 @@ guessed."""
                         t2 = start_t + round((idx + 1) * step)
                         if idx > 0:
                             t1 += round(idx * step)
+                            tslots[tslot_run[idx]] = t1
                         if idx == (len(anno_run) - 1):
                             t2 = end_t
                         tier.add(Label(text=label, t1=t1, t2=t2, codec=codec))
                     anno_run = []
+                    tslot_run = []
                     start_t = None
                     end_t = None
             self.add(tier)
