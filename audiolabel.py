@@ -1022,7 +1022,7 @@ first value t1_start and adding t1_step for subsequent values."""
         # Parse labels from rows.
         t1 = t2 = tstart = tend = None
         for idx, line in enumerate([l for l in f.readlines() if l != '']):
-            vals = line.rstrip('\r\n').split(sep)
+            vals = [val.strip() for val in line.rstrip('\r\n').split(sep)]
             if t1_start is not None and t1_step is not None:
                 t1 = (idx * t1_step) + t1_start
             else:
