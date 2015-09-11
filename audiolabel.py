@@ -1025,6 +1025,8 @@ first value t1_start and adding t1_step for subsequent values."""
             vals = [val.strip() for val in line.rstrip('\r\n').split(sep)]
             if t1_start is not None and t1_step is not None:
                 t1 = (idx * t1_step) + t1_start
+                if t1idx is not None:
+                    vals.pop(t1idx)
             else:
                 t1 = vals.pop(t1idx)
             if tstart == None: tstart = t1
