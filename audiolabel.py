@@ -999,7 +999,8 @@ first value t1_start and adding t1_step for subsequent values."""
         if fields_in_head:
             fields = f.readline().rstrip().split(sep)
         else:
-            fields = [fld.strip() for fld in fields.split(',')]
+            if isinstance(fields, (str, unicode)):
+                fields = [fld.strip() for fld in fields.split(',')]
         tiers = []
         if t1_col == None:
             t1idx = None
