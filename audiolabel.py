@@ -979,10 +979,14 @@ guessed."""
 
     def read_table(self, infile, sep='\t', fields_in_head=True,
                   t1_col='t1', t2_col='t2', fields=None, skiplines=0,
-                  t1_start=0, t1_step=1):
+                  t1_start=None, t1_step=None):
         """Generic reader for tabular file data. infile can be a filename or
-open file handle. If t1Col is None, automatically create a t1 index with
+open file handle. If t1_col is None, automatically create a t1 index with
 first value t1_start and adding t1_step for subsequent values."""
+        if t1_col is None and t1_start is None:
+            t1_start = 0
+        if t1_col is None and t1_step is None:
+            t1_step = 1
         try:
             f = open(infile, 'rb')
         except TypeError as e:  # infile should already be a file handle
@@ -1018,7 +1022,7 @@ first value t1_start and adding t1_step for subsequent values."""
         t1 = t2 = tstart = tend = None
         for idx, line in enumerate([l for l in f.readlines() if l != '']):
             vals = line.rstrip('\r\n').split(sep)
-            if t1_col == None:
+            if t1_start is not None and t1_step is not None:
                 t1 = (idx * t1_step) + t1_start
             else:
                 t1 = vals.pop(t1idx)
