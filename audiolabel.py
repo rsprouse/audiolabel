@@ -921,9 +921,18 @@ guessed."""
                 if anno.tag == 'ALIGNABLE_ANNOTATION':
                     t_anno = anno
                 elif anno.tag == 'REF_ANNOTATION':
+                    t_anno = None
                     ref = anno.get('ANNOTATION_REF')
-                    xpath = ".//ANNOTATION/ALIGNABLE_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
-                    t_anno = root.find(xpath)
+                    # Tiers can be hierarchical. Loop through refs until we find the top.
+                    while t_anno is None:
+                        xpath = ".//ANNOTATION/REF_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
+                        try:
+                            ref = root.find(xpath).get('ANNOTATION_REF')
+                        except AttributeError:  # No more REF_ANNOTATION. At the top.
+                            xpath = ".//ANNOTATION/ALIGNABLE_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
+                            t_anno = root.find(xpath)
+                            if t_anno is None:
+                                raise RuntimeError, "Could not find annotation ref."
                 else:
                     raise RuntimeError, "Unrecognized annotation type."
 
