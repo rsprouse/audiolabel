@@ -129,6 +129,7 @@ class _LabelTier(collections.MutableSet):
         self.name = name
         self.start = float(start)
         self.end = float(end)
+        self.extra_data = {} # Container for additional file-specific data.
         self._list = []      # Container for Label objects.
         # Array of starting (t1) timepoints used for calculations.
         if numlabels == None:
@@ -906,6 +907,7 @@ guessed."""
         # Preserve tier order.
         for idx,eaftier in enumerate(root.findall('./TIER')):
             tier = IntervalTier(name=eaftier.get('TIER_ID'))
+            tier.extra_data['eaf'] = eaftier.attrib
             self.add(tier)
 
         # Process labels on parent tiers before dependent tiers so that
