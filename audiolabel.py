@@ -926,6 +926,7 @@ guessed."""
             for anno in eaftier.findall('ANNOTATION/*'):
                 if anno.tag == 'ALIGNABLE_ANNOTATION':
                     t_anno = anno
+                    anno_run_length = 1
                 elif anno.tag == 'REF_ANNOTATION':
                     t_anno = None
                     ref = anno.get('ANNOTATION_REF')
