@@ -490,7 +490,10 @@ class LabelManager(collections.MutableSet):
             elif from_type == 'praat_short':
                 self.read_praat_short(from_file, codec=codec)
             elif from_type == 'eaf':
-                self.read_eaf(from_file, codec=codec)
+                if codec is None:
+                    self.read_eaf(from_file)
+                else:
+                    self.read_eaf(from_file, codec=codec)
             elif from_type == 'esps':
                 self.read_esps(from_file)
             elif from_type == 'wavesurfer':
@@ -915,6 +918,7 @@ guessed."""
         for name in tiersort:
             tier = self.tier(name)
             anno_run = []
+            anno_run_length = None
             tslot_run = []
             start_t = None
             end_t = None
@@ -925,6 +929,9 @@ guessed."""
                 elif anno.tag == 'REF_ANNOTATION':
                     t_anno = None
                     ref = anno.get('ANNOTATION_REF')
+                    if anno_run_length is None:
+                        xpath = ".//TIER/[@TIER_ID='{}']/ANNOTATION/REF_ANNOTATION/[@ANNOTATION_REF='{}']".format(name,ref)
+                        anno_run_length = len(root.findall(xpath))
                     # Tiers can be hierarchical. Loop through refs until we find the top.
                     while t_anno is None:
                         xpath = ".//ANNOTATION/REF_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
@@ -946,9 +953,9 @@ guessed."""
                     except TypeError:
                         raise RuntimeError, "Error parsing .eaf. Expected to start a new annotation sequence, but there is no time value."
                 end_t = tslots[t_anno.get('TIME_SLOT_REF2')]
-                if end_t is not None:
+                if len(anno_run) == anno_run_length:
                     end_t = float(end_t)
-                    step = (end_t - start_t) / len(anno_run)
+                    step = (end_t - start_t) / anno_run_length
                     anno_run = ['' if x is None else x for x in anno_run]
                     for idx,label in enumerate(anno_run):
                         t1 = start_t
@@ -956,13 +963,14 @@ guessed."""
                         if idx > 0:
                             t1 += round(idx * step)
                             tslots[tslot_run[idx]] = t1
-                        if idx == (len(anno_run) - 1):
+                        if idx == (anno_run_length - 1):
                             t2 = end_t
                         tier.add(Label(text=label, t1=t1, t2=t2, codec=codec))
                     anno_run = []
                     tslot_run = []
                     start_t = None
                     end_t = None
+                    anno_run_length = None
 
     def read_esps(self, filename, sep=None):
         """Read an ESPS label file."""
