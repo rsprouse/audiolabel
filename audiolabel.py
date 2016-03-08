@@ -891,6 +891,7 @@ guessed."""
         # of the sequence shares the parent's last time slot. All other
         # time slots are empty.
         tslots = {}
+        tslot_tiers = {'t1': {}, 't2': {}}
         for slot in root.findall('.//TIME_ORDER/TIME_SLOT'):
             slot_id = slot.get('TIME_SLOT_ID')
             tslots[slot_id] = slot.get('TIME_VALUE')
@@ -920,20 +921,24 @@ guessed."""
             tier = self.tier(name)
             anno_run = []
             anno_run_length = None
-            tslot_run = []
             start_t = None
             end_t = None
             eaftier = root.find(".//TIER/[@TIER_ID='{}']".format(name))
             for anno in eaftier.findall('ANNOTATION/*'):
+                anno_id = anno.get('ANNOTATION_ID')
                 if anno.tag == 'ALIGNABLE_ANNOTATION':
                     t_anno = anno
                     anno_run_length = 1
+                    start_t = float(tslots[t_anno.get('TIME_SLOT_REF1')])
+                    end_t = float(tslots[t_anno.get('TIME_SLOT_REF2')])
                 elif anno.tag == 'REF_ANNOTATION':
                     t_anno = None
                     ref = anno.get('ANNOTATION_REF')
                     if anno_run_length is None:
                         xpath = ".//TIER/[@TIER_ID='{}']/ANNOTATION/REF_ANNOTATION/[@ANNOTATION_REF='{}']".format(name,ref)
                         anno_run_length = len(root.findall(xpath))
+                    start_t = float(tslot_tiers['t1'][ref])
+                    end_t = float(tslot_tiers['t2'][ref])
                     # Tiers can be hierarchical. Loop through refs until we find the top.
                     while t_anno is None:
                         xpath = ".//ANNOTATION/REF_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
@@ -947,29 +952,22 @@ guessed."""
                 else:
                     raise RuntimeError, "Unrecognized annotation type."
 
-                anno_run.append(anno.find('ANNOTATION_VALUE').text)
-                tslot_run.append(t_anno.get('TIME_SLOT_REF1'))
-                if start_t is None:
-                    try:
-                        start_t = float(tslots[t_anno.get('TIME_SLOT_REF1')])
-                    except TypeError:
-                        raise RuntimeError, "Error parsing .eaf. Expected to start a new annotation sequence, but there is no time value."
-                end_t = tslots[t_anno.get('TIME_SLOT_REF2')]
+                anno_run.append((anno_id, anno.find('ANNOTATION_VALUE').text))
                 if len(anno_run) == anno_run_length:
-                    end_t = float(end_t)
                     step = (end_t - start_t) / anno_run_length
-                    anno_run = ['' if x is None else x for x in anno_run]
-                    for idx,label in enumerate(anno_run):
+                    for idx,mypair in enumerate(anno_run):
+                        the_id = mypair[0]
+                        label = mypair[1] || ''
                         t1 = start_t
                         t2 = start_t + round((idx + 1) * step)
                         if idx > 0:
                             t1 += round(idx * step)
-                            tslots[tslot_run[idx]] = t1
                         if idx == (anno_run_length - 1):
                             t2 = end_t
                         tier.add(Label(text=label, t1=t1, t2=t2, codec=codec))
+                        tslot_tiers['t1'][the_id] = t1
+                        tslot_tiers['t2'][the_id] = t2
                     anno_run = []
-                    tslot_run = []
                     start_t = None
                     end_t = None
                     anno_run_length = None
