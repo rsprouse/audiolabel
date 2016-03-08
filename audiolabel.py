@@ -874,7 +874,8 @@ guessed."""
 
     # TODO: this works for karuk .eaf files; need to find out whether this is sufficient for all
     # .eaf files
-    # This implementation does not retain all of the possible dependencies between tiers.
+    # TODO: This implementation does not retain all of the possible dependencies between tiers.
+    #       This method should be rewritten to handle dependent tiers properly.
     def read_eaf(self, filename, codec='utf_8'):
         """Read an ELAN .eaf file."""
         # TODO: read encoding from xml document instead of hardcoding
