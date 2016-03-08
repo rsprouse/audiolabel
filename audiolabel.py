@@ -957,7 +957,8 @@ guessed."""
                     step = (end_t - start_t) / anno_run_length
                     for idx,mypair in enumerate(anno_run):
                         the_id = mypair[0]
-                        label = mypair[1] || ''
+                        label = mypair[1]
+                        label = '' if label is None
                         t1 = start_t
                         t2 = start_t + round((idx + 1) * step)
                         if idx > 0:
