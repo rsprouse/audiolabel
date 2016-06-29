@@ -891,7 +891,7 @@ guessed."""
                     xpath = ".//ANNOTATION/ALIGNABLE_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
                     t_anno = root.find(xpath)
                 else:
-                    raise RunTimeError, "Unrecognized annotation type."
+                    raise RunTimeError("Unrecognized annotation type.")
                 times = []
                 for idx in ['1', '2']:
                     ref = t_anno.get('TIME_SLOT_REF{}'.format(idx))
