@@ -662,26 +662,27 @@ or the tier name."""
         for tier in self._tiers:
             tier.shift_by(t)
 
-    def _guess_praat_encoding(self, firstline):
+    def _guess_praat_encoding(self, filename):
         '''Guess and return the encoding of a file from the BOM. Limited to 'utf_8',
 'utf_16_be', and 'utf_16_le'. Assume 'ascii' if no BOM.'''
-        if firstline.startswith(codecs.BOM_UTF16_LE):
-            codec = 'utf_16_le'
-        elif firstline.startswith(codecs.BOM_UTF16_BE):
-            codec = 'utf_16_be'
-        elif firstline.startswith(codecs.BOM_UTF8):
-            codec = 'utf_8'
-        else:
-            codec = 'ascii'
+        # We want to read in binary mode under Python 2 or 3.
+        with open(filename, 'rb') as f:
+            firstline = f.readline()
+            if firstline.startswith(codecs.BOM_UTF16_LE):
+                codec = 'utf_16_le'
+            elif firstline.startswith(codecs.BOM_UTF16_BE):
+                codec = 'utf_16_be'
+            elif firstline.startswith(codecs.BOM_UTF8):
+                codec = 'utf_8'
+            else:
+                codec = 'ascii'
         return codec
 
     def read_praat(self, filename, codec=None):
         """Populate labels by reading in a Praat file. The short/long format will be
 guessed."""
         if codec == None:
-            with open(filename, 'rb') as f:
-                firstline = f.readline()
-                codec = self._guess_praat_encoding(firstline)
+            codec = self._guess_praat_encoding(filename)
 
         with open(filename, 'r') as f:
             f.readline()   # skip a line
@@ -699,9 +700,7 @@ guessed."""
         
     def read_praat_short(self, filename, codec=None):
         if codec == None:
-            with open(filename, 'rb') as f:
-                firstline = f.readline()
-                codec = self._guess_praat_encoding(firstline)
+            codec = self._guess_praat_encoding(filename)
 
         with open(filename, 'r') as f:
             firstline = f.readline()
@@ -779,9 +778,7 @@ guessed."""
 
     def read_praat_long(self, filename, codec=None):
         if codec == None:
-            with open(filename, 'rb') as f:
-                firstline = f.readline()
-                codec = self._guess_praat_encoding(firstline)
+            codec = self._guess_praat_encoding(filename)
 
         with open(filename, 'r') as f:
             firstline = f.readline()
