@@ -662,6 +662,20 @@ or the tier name."""
         for tier in self._tiers:
             tier.shift_by(t)
 
+    def _get_open_args(self, filename, codec):
+        '''Get the right mode and encoding parameter values for open().
+
+This method uses duck typing to determine whether we are running under
+Python 3 (automatically decodes text files) or Python 2 (does not decode).
+'''
+        openargs = None
+        try:
+            with open(filename, encoding=codec) as f:
+                openargs = {'mode': 'r', 'encoding': codec}
+        except TypeError:
+            openargs = {'mode': 'rb'}
+        return openargs
+
     def _guess_praat_encoding(self, filename):
         '''Guess and return the encoding of a file from the BOM. Limited to 'utf_8',
 'utf_16_be', and 'utf_16_le'. Assume 'ascii' if no BOM.'''
@@ -683,12 +697,14 @@ or the tier name."""
 guessed."""
         if codec == None:
             codec = self._guess_praat_encoding(filename)
-
-        with open(filename, 'r') as f:
+        openargs = self._get_open_args(filename, codec)
+        with open(filename, **openargs) as f:
             f.readline()   # skip a line
             f.readline()   # skip a line
             f.readline()   # skip a line
-            xmin = f.readline().decode(codec)  # should be 'xmin = ' line
+            xmin = f.readline()  # should be 'xmin = ' line
+            if openargs['mode'] == 'rb':
+                xmin = xmin.decode(codec)
             if re.match('xmin = \d', xmin):
                 f.close()
                 self.read_praat_long(filename, codec=codec)
@@ -701,8 +717,8 @@ guessed."""
     def read_praat_short(self, filename, codec=None):
         if codec == None:
             codec = self._guess_praat_encoding(filename)
-
-        with open(filename, 'r') as f:
+        openargs = self._get_open_args(filename, codec)
+        with open(filename, **openargs) as f:
             firstline = f.readline()
 
             # Read in header lines.
@@ -719,7 +735,9 @@ guessed."""
             # readline() calls in the loop.
             tier = None
             while True:
-                line = f.readline().decode(codec)
+                line = f.readline()
+                if openargs['mode'] == 'rb':
+                    line = line.decode(codec)
                 if line == '': break   # Reached EOF.
                 line = line.strip()
 
@@ -729,9 +747,14 @@ guessed."""
                 if line == '"IntervalTier"' or line == '"TextTier"':
                     if tier != None: self.add(tier)
                     tname = re.sub('^"|"$', '', f.readline().strip())
-                    tstart = f.readline().decode(codec)
-                    tend = f.readline().decode(codec)
-                    numintvl = int(f.readline().decode(codec).strip())
+                    tstart = f.readline()
+                    tend = f.readline()
+                    numintvl = f.readline()
+                    if openargs['mode'] == 'rb':
+                        tstart = tstart.decode(codec)
+                        tend = tend.decode(codec)
+                        numintvl = numintvl.decode(codec)
+                    numintvl = int(numintvl.strip())
                     if line == '"IntervalTier"':
                         tier = IntervalTier(start=tstart, end=tend, \
                                                  name=tname, numlabels=numintvl)
@@ -741,12 +764,17 @@ guessed."""
                 # Add a label to existing tier.
                 else:
                     if isinstance(tier, IntervalTier):
-                        t2 = f.readline().decode(codec)
+                        t2 = f.readline()
+                        if openargs['mode'] == 'rb':
+                            t2 = t2.decode(codec)
                     else:
 
                         t2 = None
+                    labtext = f.readline()
+                    if openargs['mode'] == 'rb':
+                        labtext = labtext.decode(codec)
                     lab = Label(
-                                text=_clean_praat_string(f.readline().decode(codec)),
+                                text=_clean_praat_string(labtext),
                                 t1=line,
                                 t2=t2,
                                 codec=codec
@@ -756,17 +784,32 @@ guessed."""
 
     # Read the metadata section at the top of a tier in a praat_long file
     # referenced by f. Create a label tier from the metadata and return it.
-    def _read_praat_long_tier_metadata(self, f, codec=None):
+    def _read_praat_long_tier_metadata(self, f, codec=None, mode=None):
         d = dict(cls=None, tname=None, tstart=None, tend=None, numintvl=None)
-        m = re.compile("class = \"(.+)\"").search(f.readline().decode(codec))
+        line = f.readline()
+        if mode == 'rb':
+            line = line.decode(codec)
+        m = re.compile("class = \"(.+)\"").search(line)
         d['cls'] = m.group(1)
-        m = re.compile("name = \"(.+)\"").search(f.readline().decode(codec))
+        line = f.readline()
+        if mode == 'rb':
+            line = line.decode(codec)
+        m = re.compile("name = \"(.+)\"").search(line)
         d['tname'] = m.group(1)
-        m = re.compile("xmin = (-?[\d.]+)").search(f.readline().decode(codec))
+        line = f.readline()
+        if mode == 'rb':
+            line = line.decode(codec)
+        m = re.compile("xmin = (-?[\d.]+)").search(line)
         d['tstart'] = m.group(1)
-        m = re.compile("xmax = (-?[\d.]+)").search(f.readline().decode(codec))
+        line = f.readline()
+        if mode == 'rb':
+            line = line.decode(codec)
+        m = re.compile("xmax = (-?[\d.]+)").search(line)
         d['tend'] = m.group(1)
-        m = re.compile("(?:intervals|points): size = (\d+)").search(f.readline().decode(codec))
+        line = f.readline()
+        if mode == 'rb':
+            line = line.decode(codec)
+        m = re.compile("(?:intervals|points): size = (\d+)").search(line)
         d['numintvl'] = m.group(1)
         if d['cls'] == 'IntervalTier':
             tier = IntervalTier(start=d['tstart'], end=d['tend'], \
@@ -779,8 +822,8 @@ guessed."""
     def read_praat_long(self, filename, codec=None):
         if codec == None:
             codec = self._guess_praat_encoding(filename)
-
-        with open(filename, 'r') as f:
+        openargs = self._get_open_args(filename, codec)
+        with open(filename, **openargs) as f:
             firstline = f.readline()
             # Regexes to match line containing t1, t2, label text, and label end.
             # TODO: use named captures
@@ -794,12 +837,16 @@ guessed."""
             # TODO: use header lines for error checking or processing hints? Current
             # implementation ignores their content.
             while True:
-                line = f.readline().decode(codec)
+                line = f.readline()
+                if openargs['mode'] == 'rb':
+                    line = line.decode(codec)
                 if item_re.search(line): break
                 # FIXME: better error
                 if line == '': raise Exception("Could not read file.")
             
-            tier = self._read_praat_long_tier_metadata(f, codec=codec)
+            tier = self._read_praat_long_tier_metadata(
+                f, codec=codec, mode=openargs['mode']
+            )
             
             # Don't use 'for line in f' loop construct since we use multiple
             # readline() calls in the loop.
@@ -807,21 +854,31 @@ guessed."""
             t1 = t2 = text = None
             while grabbing_labels:
                 toss = f.readline()  # skip "intervals|points [n]:" line
-                t1line = f.readline().decode(codec)
+                t1line = f.readline()
+                if openargs['mode'] == 'rb':
+                    t1line = t1line.decode(codec)
                 #print t1line
                 m = t1_re.search(t1line)
                 t1 = float(m.group(1))
                 if isinstance(tier, IntervalTier):
-                    m = t2_re.search(f.readline().decode(codec))
+                    t2line = f.readline()
+                    if openargs['mode'] == 'rb':
+                        t2line = t2line.decode(codec)
+                    m = t2_re.search(t2line)
                     t2 = float(m.group(1))
                 else:
                     t2 = None
-                m = text_re.search(f.readline().decode(codec))
+                txtline = f.readline()
+                if openargs['mode'] == 'rb':
+                    txtline = txtline.decode(codec)
+                m = text_re.search(txtline)
                 text = m.group(1)
                 grabbing_text = True
                 while grabbing_text:
                     loc = f.tell()
-                    line = f.readline().decode(codec)
+                    line = f.readline()
+                    if openargs['mode'] == 'rb':
+                        line = line.decode(codec)
                     if not (end_label_re.search(line) or line == ''):
                         text += line
                     else:
@@ -835,7 +892,9 @@ guessed."""
                         tier.add(lab)
                         if item_re.search(line):  # Start new tier.
                             self.add(tier)
-                            tier = self._read_praat_long_tier_metadata(f, codec=codec)
+                            tier = self._read_praat_long_tier_metadata(
+                                f, codec=codec, mode=openargs['mode']
+                            )
                         elif line == '': # Reached EOF
                             self.add(tier)
                             grabbing_labels = False
@@ -952,7 +1011,8 @@ guessed."""
         end_head = re.compile('^#')
         empty_line = re.compile('^\s*(#.*)?$')
         
-        with open(filename, 'r') as f:
+        openargs = self._get_open_args(filename, codec=None)
+        with open(filename, **openargs) as f:
             while True:        # Process the header.
                 line = f.readline()
                 if not line:
@@ -977,7 +1037,8 @@ guessed."""
  
     def read_wavesurfer(self, filename):
         """Read a wavesurfer label file."""
-        with open(filename, 'r') as f:
+        openargs = self._get_open_args(filename, codec=None)
+        with open(filename, **openargs) as f:
             tier = IntervalTier()
             for line in f:
                 (t1,t2,text) = line.strip().split(None,2)
