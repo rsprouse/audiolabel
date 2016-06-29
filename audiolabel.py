@@ -678,10 +678,13 @@ or the tier name."""
     def read_praat(self, filename, codec=None):
         """Populate labels by reading in a Praat file. The short/long format will be
 guessed."""
-        with open(filename, 'r') as f:
-            firstline = f.readline()
-            if codec == None:
+        if codec == None:
+            with open(filename, 'rb') as f:
+                firstline = f.readline()
                 codec = self._guess_praat_encoding(firstline)
+
+        with open(filename, 'r') as f:
+            f.readline()   # skip a line
             f.readline()   # skip a line
             f.readline()   # skip a line
             xmin = f.readline().decode(codec)  # should be 'xmin = ' line
@@ -695,10 +698,14 @@ guessed."""
                 raise LabelManagerParseError("File does not appear to be a Praat format.")
         
     def read_praat_short(self, filename, codec=None):
+        if codec == None:
+            with open(filename, 'rb') as f:
+                firstline = f.readline()
+                codec = self._guess_praat_encoding(firstline)
+
         with open(filename, 'r') as f:
             firstline = f.readline()
-            if codec == None:
-                codec = self._guess_praat_encoding(firstline)
+
             # Read in header lines.
             # TODO: use header lines for error checking or processing hints? Current
             # implementation ignores their content.
@@ -771,10 +778,13 @@ guessed."""
         return tier
 
     def read_praat_long(self, filename, codec=None):
+        if codec == None:
+            with open(filename, 'rb') as f:
+                firstline = f.readline()
+                codec = self._guess_praat_encoding(firstline)
+
         with open(filename, 'r') as f:
             firstline = f.readline()
-            if codec == None:
-                codec = self._guess_praat_encoding(firstline)
             # Regexes to match line containing t1, t2, label text, and label end.
             # TODO: use named captures
             t1_re = re.compile("(?:xmin|number) = ([^\s]+)")
