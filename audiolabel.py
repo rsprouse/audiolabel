@@ -678,7 +678,7 @@ or the tier name."""
     def read_praat(self, filename, codec=None):
         """Populate labels by reading in a Praat file. The short/long format will be
 guessed."""
-        with open(filename, 'rb') as f:
+        with open(filename, 'r') as f:
             firstline = f.readline()
             if codec == None:
                 codec = self._guess_praat_encoding(firstline)
@@ -695,7 +695,7 @@ guessed."""
                 raise LabelManagerParseError("File does not appear to be a Praat format.")
         
     def read_praat_short(self, filename, codec=None):
-        with open(filename, 'rb') as f:
+        with open(filename, 'r') as f:
             firstline = f.readline()
             if codec == None:
                 codec = self._guess_praat_encoding(firstline)
@@ -771,7 +771,7 @@ guessed."""
         return tier
 
     def read_praat_long(self, filename, codec=None):
-        with open(filename, 'rb') as f:
+        with open(filename, 'r') as f:
             firstline = f.readline()
             if codec == None:
                 codec = self._guess_praat_encoding(firstline)
@@ -945,7 +945,7 @@ guessed."""
         end_head = re.compile('^#')
         empty_line = re.compile('^\s*(#.*)?$')
         
-        with open(filename, 'rb') as f:
+        with open(filename, 'r') as f:
             while True:        # Process the header.
                 line = f.readline()
                 if not line:
@@ -970,7 +970,7 @@ guessed."""
  
     def read_wavesurfer(self, filename):
         """Read a wavesurfer label file."""
-        with open(filename, 'rb') as f:
+        with open(filename, 'r') as f:
             tier = IntervalTier()
             for line in f:
                 (t1,t2,text) = line.strip().split(None,2)
@@ -988,7 +988,7 @@ first value t1_start and adding t1_step for subsequent values."""
         if t1_col is None and t1_step is None:
             t1_step = 1
         try:
-            f = open(infile, 'rb')
+            f = open(infile, 'r')
         except TypeError as e:  # infile should already be a file handle
             f = infile
 
