@@ -77,7 +77,7 @@ class Label(object):
         return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(t1=self._t1,t2=t2str,text=self.text.encode(self._codec))
 
     def _repr_html_(self):
-	"""Output for ipython notebook."""
+        """Output for ipython notebook."""
         if self._t2 == None:
             t2str = ''
         else:
@@ -142,15 +142,15 @@ class _LabelTier(collections.MutableSet):
         return s
 
     def _repr_html_(self):
-	"""Output for ipython notebook."""
+        """Output for ipython notebook."""
         s = "<ul>[<li>"
-	if len(self._list) > 10:
+        if len(self._list) > 10:
             s += "</li><li>".join(self._list[n]._repr_html_() for n in range(5))
-	    s += "</li><li>...</li><li>"
+            s += "</li><li>...</li><li>"
             s += "</li><li>".join(self._list[n]._repr_html_() for n in range(-5,0))
-	else:
+        else:
             s += "</li><li>".join(l._repr_html_() for l in self._list)
-	s += "</li>]</ul>"
+        s += "</li>]</ul>"
         return s
 
 
@@ -370,7 +370,7 @@ class IntervalTier(_LabelTier):
         return s + ")\n"
 
     def _repr_html_(self):
-	"""Output for ipython notebook."""
+        """Output for ipython notebook."""
         s = "<p><b>IntervalTier</b>( "
         s += super(IntervalTier, self)._repr_html_()
         return s + " )</p>"
@@ -508,7 +508,7 @@ class LabelManager(collections.MutableSet):
         return s + ")\n"
         
     def _repr_html_(self):
-	"""Output for ipython notebook."""
+        """Output for ipython notebook."""
         s = "<p><b>LabelManager</b>( <b>tiers</b>="
         if len(self._tiers) > 0:
             s += "[" + ",".join(str(n) for n in range(len(self._tiers))) + "]"
