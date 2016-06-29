@@ -1,3 +1,0 @@
-The final result was compiled with:
-
-bibtex bpm; xelatex bpm   # repeat a few times to make sure all references resolve
