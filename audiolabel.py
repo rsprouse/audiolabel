@@ -224,8 +224,12 @@ from an iterable."""
         """Return the ordered list of Label objects that contain pattern. If
         the return_match is True, return an ordered list of tuples that
         contain the matching labels and corresponding match objects."""
-        if isinstance(pattern, basestring):
-            pattern = re.compile(pattern)
+        try:    # Python 2
+            if isinstance(pattern, basestring):
+                pattern = re.compile(pattern)
+        except NameError:    # Python 3
+            if isinstance(pattern, str):
+                pattern = re.compile(pattern)
         if len(kwargs) == 0:
             labels = self._list
         else:
