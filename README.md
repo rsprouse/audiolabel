@@ -1,6 +1,6 @@
 # audiolabel
 
-Python library for reading and writing label files for phonetic analysis (Praat, Elan, ESPS, Wavesurfer, tabular data). This library is known to work well under Python 2.7 and was recently updated to work with Python 3, but Python 3 support has not been heavily tested.
+Python library for reading and writing label files for phonetic analysis (Praat, ELAN, ESPS, Wavesurfer, tabular data). This library is known to work well under Python 2.7 and was recently updated to work with Python 3, but Python 3 support has not been heavily tested. ELAN support is experimental.
 
 # Overview
 
