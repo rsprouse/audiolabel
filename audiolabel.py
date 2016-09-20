@@ -466,7 +466,7 @@ class IntervalTier(_LabelTier):
         """Return the label occurring at a particular time."""
         label = None
         if method == 'closest':
-            # FIXME: this implementation is will fail for some cases
+            # FIXME: this implementation will fail for some cases
             indexes = np.where(time >= self._time)
             idx = indexes[0][-1]
             label = self._list[idx]
@@ -998,6 +998,13 @@ guessed."""
     def read_esps(self, filename, sep=None):
         """Read an ESPS label file."""
         
+        # The ESPS label file format encodes a single time for each label,
+        # which appear to be similar to Praat PointTiers. In actual usage,
+        # however, the ESPS tools encoded intervals, with the label text
+        # associated with the end of the interval. We therefore read ESPS
+        # files as IntervalTiers with the label's current time as t2, and
+        # t1 is the preceding label's t2 (0.0 for the first label).
+
         # sep is the character used to separate 'tiers' (fields) in the
         # label content. The default is ';'. If the 'separator' field is
         # included in the file header, use that instead. If the sep parameter
@@ -1017,7 +1024,8 @@ guessed."""
         
         openargs = self._get_open_args(filename, codec=None)
         with open(filename, **openargs) as f:
-            while True:        # Process the header.
+            # Process the header
+            while True:
                 line = f.readline()
                 if not line:
                     raise LabelManagerParseError("Did not find header separator '#'!")
@@ -1025,18 +1033,22 @@ guessed."""
                 m = separator.search(line)
                 if m: sep = m.group(1)
                 if end_head.search(line): break
-            while True:        # Process the body.
+
+            # Process the body
+            old_t2 = 0.0
+            while True:
                 line = f.readline()
                 if not line: break
                 if empty_line.search(line): continue
-                (t1,color,content) = line.strip().split(None,2)
+                (t2,color,content) = line.strip().split(None,2)
                 for idx, val in enumerate(content.split(sep)):
                     try:
                         tier = self.tier(idx)
                     except IndexError:
-                        tier = PointTier()
+                        tier = IntervalTier()
                         self.add(tier)
-                    tier.add(Label(text=val, t1=t1, appdata=color))
+                    tier.add(Label(text=val, t1=old_t2, t2=t2, appdata=color))
+                    old_t2 = t2
                 
  
     def read_wavesurfer(self, filename):
