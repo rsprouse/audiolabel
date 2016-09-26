@@ -38,6 +38,17 @@ You can use the `tier()` method to access the tiers by name or by the tier index
 
 Tier names are commonly found in Praat textgrids, but other label file types might not include names and require access to tiers by index.
 
+The `labels_at()` method returns a tuple of Label objects from each of the tiers. If the label file provides tier names, then a namedtuple is returned, and as with `tier()` you can access the result by tier index or name:
+
+```
+    labels = lm.labels_at(1.0)   # Get Label from all tiers at time 1.0
+    print(labels[0].text)        # Content of Label from phontier
+    print(labels.word.text)      # Content of Label from wordtier
+    print(labels[2].text)        # Content of Label from contexttier
+```
+
+Notice that the tier name is an attribute of the namedtuple and not a string.
+
 # PointTiers and IntervalTiers
 
 A label tier is an array of individual Labels, ordered chronologically. Label tiers can be one of two types. A PointTier contains only Labels that are associated with a single point in time, and an IntervalTier contains only Labels that describe an interval and are associated with two points in time.
