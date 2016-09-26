@@ -28,7 +28,7 @@ The LabelManager provides access to the individual tiers in a label file. The `.
     # Output is ('word', 'phone', 'context')
 ```
 
-You can use the tier() method to access the tiers by name or by the tier index, with the first tier assigned index 0:
+You can use the `tier()` method to access the tiers by name or by the tier index, with the first tier assigned index 0:
 
 ```
     phontier = lm.tier(0)
@@ -49,26 +49,39 @@ A simple way to access the Labels in a tier is to iterate over its contents:
         print(word.t1, word.text)
 ```
 
-Another way to access a Label in a tier is with the label_at() method, which returns a Label object corresponding to a time:
+Another way to access a Label in a tier is with the `label_at()` method, which returns a Label object corresponding to a time:
 
 ```
     word1 = wordtier.label_at(1.0)
     print(word1.text)
 ```
 
-The tslice() method works much like the Array slice() method, but uses time-based indexing rather than integer indexes:
+The `tslice()` method works much like array slicing, but uses time-based indexing rather than integer indexes:
 
 ```
     for word in wordtier.tslice(0.4, 0.6):
         print(word.t1, word.text)
 ```
 
-The search() method returns an Array of Label objects that match a regular expression pattern:
+The `search()` method returns a list of Label objects that match a regular expression pattern. The pattern can be provided as a string or as a precompiled regular expression.
 
 ```
-    # Iterate over all words containing 'r'
+    # Iterate over all words containing 'r'.
     for word in wordtier.search('r'):
         print(word.t1, word.text)
+        
+    # Precompiled regex works too.
+    myre = re.compile('r')
+    for word in wordtier.search(myre):
+        print(word.t1, word.text)
+```
+
+If the `return_match` parameter is set to `True` then `search()` returns a list of tuples containing the matching Labels and a regular expression match object. This feature is useful when your regular expression contains capture groups:
+
+```
+    myre = re.compile('(?P<vowel>AH|EH|IH)(?P<stress>\d)')
+    for phone, match in phontier.search(myre, return_match=True):
+        print(phone.text, match.group('vowel'), match.group('stress'))
 ```
 
 The Labels in a tier are ordered chronologically, and the `next()` and `prev()` methods provide access to Labels that follow or precede another Label.
@@ -99,7 +112,7 @@ Label objects hold individual annotations and are associated with a point in tim
 Labels that represent intervals rather than points in time have additional meaningful attributes:
 
 ```
-   print(word.t1)       # end of an interval Label
+   print(word.t2)       # end of an interval Label
    print(word.center)   # midpoint of the interval
    print(word.duration) # duration of the interval
 ```
