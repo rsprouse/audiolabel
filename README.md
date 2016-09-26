@@ -49,6 +49,20 @@ The `labels_at()` method returns a tuple of Label objects from each of the tiers
 
 Notice that the tier name is an attribute of the namedtuple and not a string.
 
+The `scale_by()` method will multiply the time values of all Labels (in all tiers) by a scale factor:
+
+```
+   lm.scale_by(1000)   # E.g. convert seconds to milliseconds
+   lm.scale_by(0.001)  # and back to seconds
+```
+
+And `shift_by()` shifts the time values of all Labels by an offset:
+
+```
+    lm.shift_by(0.5)   # shift 0.5 seconds
+    lm.shift_by(-0.5)  # shift back
+```
+
 # PointTiers and IntervalTiers
 
 A label tier is an array of individual Labels, ordered chronologically. Label tiers can be one of two types. A PointTier contains only Labels that are associated with a single point in time, and an IntervalTier contains only Labels that describe an interval and are associated with two points in time.
