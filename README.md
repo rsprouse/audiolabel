@@ -21,7 +21,7 @@ The LabelManager contains the label file's label tiers, and the tiers contain th
 
 # LabelManager
 
-The LabelManager provides access to the individual tiers in a label file. The .names attribute stores the tier names:
+The LabelManager provides access to the individual tiers in a label file. The `.names` attribute stores the tier names:
 
 ```
     print(lm.names)
@@ -38,7 +38,7 @@ You can use the tier() method to access the tiers by name or by the tier index, 
 
 Tier names are commonly found in Praat textgrids, but other label file types might not include names and require access to tiers by index.
 
-# PointTier and IntervalTier objects
+# PointTiers and IntervalTiers
 
 A label tier is an array of individual Labels, ordered chronologically. Label tiers can be one of two types. A PointTier contains only Labels that are associated with a single point in time, and an IntervalTier contains only Labels that describe an interval and are associated with two points in time.
 
@@ -71,12 +71,20 @@ The search() method returns an Array of Label objects that match a regular expre
         print(word.t1, word.text)
 ```
 
-The Labels in a tier are ordered chronologically, and the next() and prev() methods provide access to Labels that follow or precede another Label.
+The Labels in a tier are ordered chronologically, and the `next()` and `prev()` methods provide access to Labels that follow or precede another Label.
 
 ```
     # Print the content of all Labels containing 'r' and the following Label
     for word in wordtier.search('r'):
         print(word.text, wordtier.next(word).text)
+```
+
+These methods also have a `skip` parameter that allows you to skip over one or more intervening labels:
+
+```
+    # Get the label that two labels that precede a label.
+    prevword = wordtier.prev(word)             # By default skip=0
+    preprevword = wordtier.prev(word, skip=1)  # The label before prevword
 ```
 
 # Labels
@@ -91,8 +99,8 @@ Label objects hold individual annotations and are associated with a point in tim
 Labels that represent intervals rather than points in time have additional meaningful attributes:
 
 ```
-   print(word.t1)     # end of an interval Label
-   print(word.center) # midpoint of the interval
+   print(word.t1)       # end of an interval Label
+   print(word.center)   # midpoint of the interval
    print(word.duration) # duration of the interval
 ```
 
