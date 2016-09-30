@@ -1040,7 +1040,17 @@ guessed."""
                 line = f.readline()
                 if not line: break
                 if empty_line.search(line): continue
-                (t2,color,content) = line.strip().split(None,2)
+                try:
+                  (t2,color,content) = line.strip().split(None,2)
+                except ValueError:
+	            try:
+                        (t2,color) = line.strip().split(None,1)
+	                content = ''
+                    except ValueError:
+                        t2 = line.strip()
+                        color = ''
+	                content = ''
+
                 for idx, val in enumerate(content.split(sep)):
                     try:
                         tier = self.tier(idx)
