@@ -74,7 +74,12 @@ class Label(object):
             t2str = ''
         else:
             t2str = "t2={t2:0.4f}, ".format(t2=self._t2)
-        return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(t1=self._t1,t2=t2str,text=self.text.encode(self._codec))
+        try:
+            isinstance(self.text, unicode)
+            return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(t1=self._t1,t2=t2str,text=self.text.encode(self._codec))
+        except NameError:
+            return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(t1=self._t1,t2=t2str,text=self.text)
+        
 
     def _repr_html_(self):
         """Output for ipython notebook."""
@@ -1043,13 +1048,13 @@ guessed."""
                 try:
                   (t2,color,content) = line.strip().split(None,2)
                 except ValueError:
-	            try:
+                    try:
                         (t2,color) = line.strip().split(None,1)
-	                content = ''
+                        content = ''
                     except ValueError:
                         t2 = line.strip()
                         color = ''
-	                content = ''
+                        content = ''
 
                 for idx, val in enumerate(content.split(sep)):
                     try:
@@ -1073,7 +1078,7 @@ guessed."""
 
     def read_table(self, infile, sep='\t', fields_in_head=True,
                   t1_col='t1', t2_col='t2', fields=None, skiplines=0,
-                  t1_start=None, t1_step=None):
+                  t1_start=None, t1_step=None, codec='utf-8'):
         """Generic reader for tabular file data. infile can be a filename or
 open file handle. If t1_col is None, automatically create a t1 index with
 first value t1_start and adding t1_step for subsequent values."""
@@ -1082,9 +1087,18 @@ first value t1_start and adding t1_step for subsequent values."""
         if t1_col is None and t1_step is None:
             t1_step = 1
         try:
-            f = open(infile, 'r')
+            openargs = self._get_open_args(infile, codec)
+            f = open(infile, **openargs)
+            binmode = openargs['mode'] == 'rb'
         except TypeError as e:  # infile should already be a file handle
             f = infile
+            try:
+                binmode = f.mode == 'rb'
+            except AttributeError:
+                # We get here if infile is a TextIOWrapper rather than a
+                # file handle (as would be returned by 
+                # subprocess.Popen(..., stdout=PIPE, universal_newlines=True)
+                binmode = False
 
         for skip in range(skiplines):
             f.readline()
@@ -1093,8 +1107,12 @@ first value t1_start and adding t1_step for subsequent values."""
         if fields_in_head:
             fields = f.readline().rstrip().split(sep)
         else:
-            if isinstance(fields, (str, unicode)):
-                fields = [fld.strip() for fld in fields.split(',')]
+            try:
+                if isinstance(fields, (str, unicode)):
+                    fields = [fld.strip() for fld in fields.split(',')]
+            except NameError:
+                if isinstance(fields, (str)):
+                    fields = [fld.strip() for fld in fields.split(',')]
         tiers = []
         if t1_col == None:
             t1idx = None
@@ -1123,9 +1141,12 @@ first value t1_start and adding t1_step for subsequent values."""
                     vals.pop(t1idx)
             else:
                 t1 = vals.pop(t1idx)
+                if binmode is True: t1 = t1.decode(codec)
             if tstart == None: tstart = t1
             if t2idx != None: t2 = vals.pop(t2idx)
+            if binmode is True and t2 is not None: t2 = t2.decode(codec)
             for tier, val in zip(tiers, vals):
+                if binmode is True: val = val.decode(codec)
                 tier.add(Label(text=val, t1=t1, t2=t2))
 
         # Finish the tier.

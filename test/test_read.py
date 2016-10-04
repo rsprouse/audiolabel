@@ -2,6 +2,7 @@
 # -*- vim: set fileencoding=utf-8 -*-
 
 import audiolabel
+import subprocess
 
 def test_initialization():
     l1 = audiolabel.Label('first', 1.0, 2.0)
@@ -98,6 +99,53 @@ def test_table():
     assert lm.tier('rms').next(rms0).text == '7.4'
     assert lm.tier('rms').next(rms0, 2).text == '7.3'
 
+def test_table_pipe():
+    # First, create table from file.
+    lm_file = audiolabel.LabelManager(
+        from_file='test/pplain.table',
+        from_type='table',
+        sep=' ',
+        fields_in_head=False,
+        fields='f0,is_voiced,rms,acpeak',
+        t1_col=None,
+        t1_start=0.0,
+        t1_step=0.010
+    )
+    assert len(lm_file._tiers) == 4
+    assert lm_file.tier('rms')[0].text == '0'
+    rms0 = lm_file.tier('rms')[0]
+    assert lm_file.tier('rms').next(rms0).text == '28.0572'
+    assert lm_file.tier('rms').next(rms0, 2).text == '47.6023'
+    # Second, create table from same file and using subprocess.
+    cat_proc = subprocess.Popen(
+        ['cat', 'test/pplain.table'],
+        stdout=subprocess.PIPE,
+        universal_newlines=True
+    )
+    lm_proc = audiolabel.LabelManager(
+        from_file=cat_proc.stdout,
+        from_type='table',
+        sep=' ',
+        fields_in_head=False,
+        fields='f0,is_voiced,rms,acpeak',
+        t1_col=None,
+        t1_start=0.0,
+        t1_step=0.010
+    )
+    assert len(lm_proc._tiers) == 4
+    assert lm_proc.tier('rms')[0].text == '0'
+    rms0 = lm_proc.tier('rms')[0]
+    assert lm_proc.tier('rms').next(rms0).text == '28.0572'
+    assert lm_proc.tier('rms').next(rms0, 2).text == '47.6023'
+    # Third, make sure the results are the same.
+    for name in lm_file.names:
+        tier_file = lm_file.tier(name)
+        tier_proc = lm_proc.tier(name)
+        for (l_file, l_proc) in zip(tier_file, tier_proc):
+            assert(l_file.t1 == l_proc.t1)
+            assert(l_file.t2 == l_proc.t2)
+            assert(l_file.text == l_proc.text)
+
 def test_get_praat_header():
     lm = audiolabel.LabelManager(
         from_file='test/this_is_a_label_file.long.TextGrid',
@@ -117,4 +165,5 @@ if __name__ == '__main__':
     test_praat_utf_16_be()
     test_esps()
     test_table()
+    test_table_pipe()
     test_get_praat_header()
