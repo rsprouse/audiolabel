@@ -119,8 +119,7 @@ def test_table_pipe():
     # Second, create table from same file and using subprocess.
     cat_proc = subprocess.Popen(
         ['cat', 'test/pplain.table'],
-        stdout=subprocess.PIPE,
-        universal_newlines=True
+        stdout=subprocess.PIPE
     )
     lm_proc = audiolabel.LabelManager(
         from_file=cat_proc.stdout,
@@ -146,6 +145,29 @@ def test_table_pipe():
             assert(l_file.t2 == l_proc.t2)
             assert(l_file.text == l_proc.text)
 
+def test_table_pipe_newlines():
+    '''Test reading from table using subprocess with universal_newlines.'''
+    cat_proc = subprocess.Popen(
+        ['cat', 'test/pplain.table'],
+        stdout=subprocess.PIPE,
+        universal_newlines=True
+    )
+    lm_proc = audiolabel.LabelManager(
+        from_file=cat_proc.stdout,
+        from_type='table',
+        sep=' ',
+        fields_in_head=False,
+        fields='f0,is_voiced,rms,acpeak',
+        t1_col=None,
+        t1_start=0.0,
+        t1_step=0.010
+    )
+    assert len(lm_proc._tiers) == 4
+    assert lm_proc.tier('rms')[0].text == '0'
+    rms0 = lm_proc.tier('rms')[0]
+    assert lm_proc.tier('rms').next(rms0).text == '28.0572'
+    assert lm_proc.tier('rms').next(rms0, 2).text == '47.6023'
+
 def test_get_praat_header():
     lm = audiolabel.LabelManager(
         from_file='test/this_is_a_label_file.long.TextGrid',
@@ -166,4 +188,5 @@ if __name__ == '__main__':
     test_esps()
     test_table()
     test_table_pipe()
+    test_table_pipe_newlines()
     test_get_praat_header()
