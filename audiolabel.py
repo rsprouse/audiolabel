@@ -481,18 +481,27 @@ class LabelManager(collections.MutableSet):
     """Manage one or more Tier objects."""
     
     def __init__(self, appdata=None, from_file=None, from_type=None,
-                 codec='utf-8', *args, **kwargs):
+                 codec=None, *args, **kwargs):
         super(LabelManager, self).__init__()
         self._tiers = []
         # Container for app-specific data not managed by this class.
         self.appdata = appdata
         if from_file != None:
             if from_type == 'praat':
-                self.read_praat(from_file, codec=codec)
+                if codec is not None:
+                    self.read_praat(from_file, codec=codec)
+                else:
+                    self.read_praat(from_file)
             elif from_type == 'praat_long':
-                self.read_praat_long(from_file, codec=codec)
+                if codec is not None:
+                    self.read_praat_long(from_file, codec=codec)
+                else:
+                    self.read_praat_long(from_file)
             elif from_type == 'praat_short':
-                self.read_praat_short(from_file, codec=codec)
+                if codec is not None:
+                    self.read_praat_short(from_file, codec=codec)
+                else:
+                    self.read_praat_short(from_file)
             elif from_type == 'eaf':
                 self.read_eaf(from_file)
             elif from_type == 'esps':
@@ -500,7 +509,10 @@ class LabelManager(collections.MutableSet):
             elif from_type == 'wavesurfer':
                 self.read_wavesurfer(from_file)
             elif from_type == 'table':
-                self.read_table(from_file, codec=codec, **kwargs)
+                if codec is not None:
+                    self.read_table(from_file, codec=codec, **kwargs)
+                else:
+                    self.read_table(from_file, **kwargs)
               
     @property
     def names(self):
