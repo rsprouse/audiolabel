@@ -1102,7 +1102,7 @@ guessed."""
 
     def read_table(self, infile, sep='\t', fields_in_head=True,
                   t1_col='t1', t2_col='t2', fields=None, skiplines=0,
-                  t1_start=None, t1_step=None, codec='utf-8'):
+                  t1_start=None, t1_step=None, codec=None):
         """Generic reader for tabular file data. infile can be a filename or
 open file handle. If t1_col is None, automatically create a t1 index with
 first value t1_start and adding t1_step for subsequent values."""
@@ -1110,6 +1110,8 @@ first value t1_start and adding t1_step for subsequent values."""
             t1_start = 0
         if t1_col is None and t1_step is None:
             t1_step = 1
+        if codec is None:
+            codec = 'utf-8'
         try:
             openargs = self._get_open_args(infile, codec)
             f = open(infile, **openargs)
