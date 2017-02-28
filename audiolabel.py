@@ -8,6 +8,7 @@ Created on Fri May 10 13:29:26 2013
 
 from __future__ import division
 
+import sys
 import numpy as np
 import codecs
 import collections
@@ -493,20 +494,11 @@ class LabelManager(collections.MutableSet):
         self.appdata = appdata
         if from_file != None:
             if from_type == 'praat':
-                if codec is not None:
-                    self.read_praat(from_file, codec=codec)
-                else:
-                    self.read_praat(from_file)
+                self.read_praat(from_file, codec=codec)
             elif from_type == 'praat_long':
-                if codec is not None:
-                    self.read_praat_long(from_file, codec=codec)
-                else:
-                    self.read_praat_long(from_file)
+                self.read_praat_long(from_file, codec=codec)
             elif from_type == 'praat_short':
-                if codec is not None:
-                    self.read_praat_short(from_file, codec=codec)
-                else:
-                    self.read_praat_short(from_file)
+                self.read_praat_short(from_file, codec=codec)
             elif from_type == 'eaf':
                 self.read_eaf(from_file)
             elif from_type == 'esps':
@@ -514,11 +506,8 @@ class LabelManager(collections.MutableSet):
             elif from_type == 'wavesurfer':
                 self.read_wavesurfer(from_file)
             elif from_type == 'table':
-                if codec is not None:
-                    self.read_table(from_file, codec=codec, **kwargs)
-                else:
-                    self.read_table(from_file, **kwargs)
-              
+                self.read_table(from_file, codec=codec, **kwargs)
+
     @property
     def names(self):
         """Return a tuple of tier names."""
@@ -702,27 +691,47 @@ Python 3 (automatically decodes text files) or Python 2 (does not decode).
             openargs = {'mode': 'rb'}
         return openargs
 
-    def _guess_praat_encoding(self, filename):
+    def guess_praat_encoding(self, filename):
         '''Guess and return the encoding of a file from the BOM. Limited to 'utf_8',
 'utf_16_be', and 'utf_16_le'. Assume 'ascii' if no BOM.'''
+        has_bom = True
         # We want to read in binary mode under Python 2 or 3.
         with open(filename, 'rb') as f:
             firstline = f.readline()
             if firstline.startswith(codecs.BOM_UTF16_LE):
-                codec = 'utf_16_le'
+                guessed_codec = 'utf_16_le'
             elif firstline.startswith(codecs.BOM_UTF16_BE):
-                codec = 'utf_16_be'
+                guessed_codec = 'utf_16_be'
             elif firstline.startswith(codecs.BOM_UTF8):
-                codec = 'utf_8'
+                guessed_codec = 'utf_8'
             else:
-                codec = 'ascii'
+                guessed_codec = 'ascii'
+                has_bom = False
+        return (guessed_codec, has_bom)
+
+    def get_praat_encoding(self, filename, user_codec=None):
+        '''Return encoding of a Praat textgrid based on special logic. First
+determine if the textgrid has a BOM. If BOM exists, use the codec that
+it indicates. If it does not exist, use the codec suggested by the user. If user
+does not suggest a codec, use default encoding.'''
+        guessed_codec, has_bom = self.guess_praat_encoding(filename)
+        if has_bom is True:  # Trust BOM.
+            if user_codec is not None and (user_codec != guessed_codec):
+               sys.stderr.write(
+                   '''WARNING: overriding user-specified encoding {:}.
+Found BOM for {:} encoding.\n'''.format(user_codec, guessed_codec)
+               )
+            codec = guessed_codec
+        elif user_codec is not None:
+            codec = user_codec
+        else:
+            codec = guessed_codec
         return codec
 
     def read_praat(self, filename, codec=None):
         """Populate labels by reading in a Praat file. The short/long format will be
 guessed."""
-        if codec == None:
-            codec = self._guess_praat_encoding(filename)
+        codec = self.get_praat_encoding(filename, user_codec=codec)
         openargs = self._get_open_args(filename, codec)
         with open(filename, **openargs) as f:
             f.readline()   # skip a line
@@ -741,8 +750,7 @@ guessed."""
                 raise LabelManagerParseError("File does not appear to be a Praat format.")
         
     def read_praat_short(self, filename, codec=None):
-        if codec == None:
-            codec = self._guess_praat_encoding(filename)
+        codec = self.get_praat_encoding(filename, user_codec=codec)
         openargs = self._get_open_args(filename, codec)
         with open(filename, **openargs) as f:
             firstline = f.readline()
@@ -846,8 +854,7 @@ guessed."""
         return tier
 
     def read_praat_long(self, filename, codec=None):
-        if codec == None:
-            codec = self._guess_praat_encoding(filename)
+        codec = self.get_praat_encoding(filename, user_codec=codec)
         openargs = self._get_open_args(filename, codec)
         with open(filename, **openargs) as f:
             firstline = f.readline()
