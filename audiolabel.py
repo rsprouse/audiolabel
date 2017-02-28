@@ -74,11 +74,16 @@ class Label(object):
             t2str = ''
         else:
             t2str = "t2={t2:0.4f}, ".format(t2=self._t2)
+        text = self.text
         try:
-            isinstance(self.text, unicode)
-            return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(t1=self._t1,t2=t2str,text=self.text.encode(self._codec))
+            text = self.text.encode(self._codec)
         except NameError:
-            return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(t1=self._t1,t2=t2str,text=self.text)
+            pass
+        return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(
+            t1=self._t1,
+            t2=t2str,
+            text=text
+        )
         
 
     def _repr_html_(self):
