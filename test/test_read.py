@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- vim: set fileencoding=utf-8 -*-
 
+import sys
 import audiolabel
 import subprocess
 
@@ -75,7 +76,21 @@ def test_praat_utf_16_be():
         from_file='test/Turkmen_NA_20130919_G_3.TextGrid',
         from_type='praat'
     )
-    # TODO: add test
+    # TODO: add tests
+
+def test_praat_utf_16_be_warn():
+    sys.stderr.write('''The following two lines should be repeated after the asterisks:
+WARNING: overriding user-specified encoding utf-8.
+Found BOM for utf_16_be encoding.
+***************
+'''
+    )
+    lm = audiolabel.LabelManager(
+        from_file='test/Turkmen_NA_20130919_G_3.TextGrid',
+        from_type='praat',
+        codec='utf-8'
+    )
+    # TODO: add tests. capture stderr and don't display at runtime
 
 def test_praat_utf_8_no_bom():
     lm = audiolabel.LabelManager(
@@ -194,6 +209,7 @@ if __name__ == '__main__':
     test_praat_short_generic_fromtype()
     test_praat_utf_8()
     test_praat_utf_16_be()
+    test_praat_utf_16_be_warn()
     test_praat_utf_8_no_bom()
     test_esps()
     test_table()
