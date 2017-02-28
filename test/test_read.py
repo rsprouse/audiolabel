@@ -77,6 +77,15 @@ def test_praat_utf_16_be():
     )
     # TODO: add test
 
+def test_praat_utf_8_no_bom():
+    lm = audiolabel.LabelManager(
+        from_file='test/utf8_no_BOM.TextGrid',
+        from_type='praat',
+        codec='utf-8'
+    )
+    assert lm.tier('s1').label_at(8.0).text == u"bet bít"
+    assert lm.tier('s2').label_at(6.0).text == u"bat bat"
+
 def test_esps():
     lm = audiolabel.LabelManager(
         from_file='test/sample.esps',
@@ -185,6 +194,7 @@ if __name__ == '__main__':
     test_praat_short_generic_fromtype()
     test_praat_utf_8()
     test_praat_utf_16_be()
+    test_praat_utf_8_no_bom()
     test_esps()
     test_table()
     test_table_pipe()
