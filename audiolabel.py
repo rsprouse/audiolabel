@@ -490,15 +490,16 @@ class LabelManager(collections.MutableSet):
                  codec=None, *args, **kwargs):
         super(LabelManager, self).__init__()
         self._tiers = []
+        self.codec = codec
         # Container for app-specific data not managed by this class.
         self.appdata = appdata
         if from_file != None:
             if from_type == 'praat':
-                self.read_praat(from_file, codec=codec)
+                self.read_praat(from_file)
             elif from_type == 'praat_long':
-                self.read_praat_long(from_file, codec=codec)
+                self.read_praat_long(from_file)
             elif from_type == 'praat_short':
-                self.read_praat_short(from_file, codec=codec)
+                self.read_praat_short(from_file)
             elif from_type == 'eaf':
                 self.read_eaf(from_file)
             elif from_type == 'esps':
@@ -506,7 +507,7 @@ class LabelManager(collections.MutableSet):
             elif from_type == 'wavesurfer':
                 self.read_wavesurfer(from_file)
             elif from_type == 'table':
-                self.read_table(from_file, codec=codec, **kwargs)
+                self.read_table(from_file, **kwargs)
 
     @property
     def names(self):
@@ -677,7 +678,7 @@ or the tier name."""
         for tier in self._tiers:
             tier.shift_by(t)
 
-    def _get_open_args(self, filename, codec):
+    def _get_open_args(self, filename):
         '''Get the right mode and encoding parameter values for open().
 
 This method uses duck typing to determine whether we are running under
@@ -685,8 +686,8 @@ Python 3 (automatically decodes text files) or Python 2 (does not decode).
 '''
         openargs = None
         try:
-            with open(filename, encoding=codec) as f:
-                openargs = {'mode': 'r', 'encoding': codec}
+            with open(filename, encoding=self.codec) as f:
+                openargs = {'mode': 'r', 'encoding': self.codec}
         except TypeError:
             openargs = {'mode': 'rb'}
         return openargs
@@ -709,49 +710,46 @@ Python 3 (automatically decodes text files) or Python 2 (does not decode).
                 has_bom = False
         return (guessed_codec, has_bom)
 
-    def get_praat_encoding(self, filename, user_codec=None):
-        '''Return encoding of a Praat textgrid based on special logic. First
+    def set_praat_encoding(self, filename):
+        '''Set codec attribute for a Praat textgrid based on special logic. First
 determine if the textgrid has a BOM. If BOM exists, use the codec that
 it indicates. If it does not exist, use the codec suggested by the user. If user
 does not suggest a codec, use default encoding.'''
         guessed_codec, has_bom = self.guess_praat_encoding(filename)
         if has_bom is True:  # Trust BOM.
-            if user_codec is not None and (user_codec != guessed_codec):
+            if self.codec is not None and (self.codec != guessed_codec):
                sys.stderr.write(
                    '''WARNING: overriding user-specified encoding {:}.
-Found BOM for {:} encoding.\n'''.format(user_codec, guessed_codec)
+Found BOM for {:} encoding.\n'''.format(self.codec, guessed_codec)
                )
-            codec = guessed_codec
-        elif user_codec is not None:
-            codec = user_codec
-        else:
-            codec = guessed_codec
-        return codec
+            self.codec = guessed_codec
+        elif self.codec is None:  # Default
+            self.codec = guessed_codec
 
-    def read_praat(self, filename, codec=None):
+    def read_praat(self, filename):
         """Populate labels by reading in a Praat file. The short/long format will be
 guessed."""
-        codec = self.get_praat_encoding(filename, user_codec=codec)
-        openargs = self._get_open_args(filename, codec)
+        self.set_praat_encoding(filename)
+        openargs = self._get_open_args(filename)
         with open(filename, **openargs) as f:
             f.readline()   # skip a line
             f.readline()   # skip a line
             f.readline()   # skip a line
             xmin = f.readline()  # should be 'xmin = ' line
             if openargs['mode'] == 'rb':
-                xmin = xmin.decode(codec)
+                xmin = xmin.decode(self.codec)
             if re.match('xmin = \d', xmin):
                 f.close()
-                self.read_praat_long(filename, codec=codec)
+                self.read_praat_long(filename)
             elif re.match('\d', xmin):
                 f.close()
-                self.read_praat_short(filename, codec=codec)
+                self.read_praat_short(filename)
             else:
                 raise LabelManagerParseError("File does not appear to be a Praat format.")
         
-    def read_praat_short(self, filename, codec=None):
-        codec = self.get_praat_encoding(filename, user_codec=codec)
-        openargs = self._get_open_args(filename, codec)
+    def read_praat_short(self, filename):
+        self.set_praat_encoding(filename)
+        openargs = self._get_open_args(filename)
         with open(filename, **openargs) as f:
             firstline = f.readline()
 
@@ -771,7 +769,7 @@ guessed."""
             while True:
                 line = f.readline()
                 if openargs['mode'] == 'rb':
-                    line = line.decode(codec)
+                    line = line.decode(self.codec)
                 if line == '': break   # Reached EOF.
                 line = line.strip()
 
@@ -785,9 +783,9 @@ guessed."""
                     tend = f.readline()
                     numintvl = f.readline()
                     if openargs['mode'] == 'rb':
-                        tstart = tstart.decode(codec)
-                        tend = tend.decode(codec)
-                        numintvl = numintvl.decode(codec)
+                        tstart = tstart.decode(self.codec)
+                        tend = tend.decode(self.codec)
+                        numintvl = numintvl.decode(self.codec)
                     numintvl = int(numintvl.strip())
                     if line == '"IntervalTier"':
                         tier = IntervalTier(start=tstart, end=tend, \
@@ -800,49 +798,49 @@ guessed."""
                     if isinstance(tier, IntervalTier):
                         t2 = f.readline()
                         if openargs['mode'] == 'rb':
-                            t2 = t2.decode(codec)
+                            t2 = t2.decode(self.codec)
                     else:
 
                         t2 = None
                     labtext = f.readline()
                     if openargs['mode'] == 'rb':
-                        labtext = labtext.decode(codec)
+                        labtext = labtext.decode(self.codec)
                     lab = Label(
                                 text=_clean_praat_string(labtext),
                                 t1=line,
                                 t2=t2,
-                                codec=codec
+                                codec=self.codec
                                )
                     tier.add(lab)
             if tier != None: self.add(tier)
 
     # Read the metadata section at the top of a tier in a praat_long file
     # referenced by f. Create a label tier from the metadata and return it.
-    def _read_praat_long_tier_metadata(self, f, codec=None, mode=None):
+    def _read_praat_long_tier_metadata(self, f, mode=None):
         d = dict(cls=None, tname=None, tstart=None, tend=None, numintvl=None)
         line = f.readline()
         if mode == 'rb':
-            line = line.decode(codec)
+            line = line.decode(self.codec)
         m = re.compile("class = \"(.+)\"").search(line)
         d['cls'] = m.group(1)
         line = f.readline()
         if mode == 'rb':
-            line = line.decode(codec)
+            line = line.decode(self.codec)
         m = re.compile("name = \"(.+)\"").search(line)
         d['tname'] = m.group(1)
         line = f.readline()
         if mode == 'rb':
-            line = line.decode(codec)
+            line = line.decode(self.codec)
         m = re.compile("xmin = (-?[\d.]+)").search(line)
         d['tstart'] = m.group(1)
         line = f.readline()
         if mode == 'rb':
-            line = line.decode(codec)
+            line = line.decode(self.codec)
         m = re.compile("xmax = (-?[\d.]+)").search(line)
         d['tend'] = m.group(1)
         line = f.readline()
         if mode == 'rb':
-            line = line.decode(codec)
+            line = line.decode(self.codec)
         m = re.compile("(?:intervals|points): size = (\d+)").search(line)
         d['numintvl'] = m.group(1)
         if d['cls'] == 'IntervalTier':
@@ -853,9 +851,9 @@ guessed."""
                                   name=d['tname'], numlabels=d['numintvl'])
         return tier
 
-    def read_praat_long(self, filename, codec=None):
-        codec = self.get_praat_encoding(filename, user_codec=codec)
-        openargs = self._get_open_args(filename, codec)
+    def read_praat_long(self, filename):
+        self.set_praat_encoding(filename)
+        openargs = self._get_open_args(filename)
         with open(filename, **openargs) as f:
             firstline = f.readline()
             # Regexes to match line containing t1, t2, label text, and label end.
@@ -872,13 +870,13 @@ guessed."""
             while True:
                 line = f.readline()
                 if openargs['mode'] == 'rb':
-                    line = line.decode(codec)
+                    line = line.decode(self.codec)
                 if item_re.search(line): break
                 # FIXME: better error
                 if line == '': raise Exception("Could not read file.")
             
             tier = self._read_praat_long_tier_metadata(
-                f, codec=codec, mode=openargs['mode']
+                f, mode=openargs['mode']
             )
             
             # Don't use 'for line in f' loop construct since we use multiple
@@ -889,21 +887,21 @@ guessed."""
                 toss = f.readline()  # skip "intervals|points [n]:" line
                 t1line = f.readline()
                 if openargs['mode'] == 'rb':
-                    t1line = t1line.decode(codec)
+                    t1line = t1line.decode(self.codec)
                 #print t1line
                 m = t1_re.search(t1line)
                 t1 = float(m.group(1))
                 if isinstance(tier, IntervalTier):
                     t2line = f.readline()
                     if openargs['mode'] == 'rb':
-                        t2line = t2line.decode(codec)
+                        t2line = t2line.decode(self.codec)
                     m = t2_re.search(t2line)
                     t2 = float(m.group(1))
                 else:
                     t2 = None
                 txtline = f.readline()
                 if openargs['mode'] == 'rb':
-                    txtline = txtline.decode(codec)
+                    txtline = txtline.decode(self.codec)
                 m = text_re.search(txtline)
                 text = m.group(1)
                 grabbing_text = True
@@ -911,7 +909,7 @@ guessed."""
                     loc = f.tell()
                     line = f.readline()
                     if openargs['mode'] == 'rb':
-                        line = line.decode(codec)
+                        line = line.decode(self.codec)
                     if not (end_label_re.search(line) or line == ''):
                         text += line
                     else:
@@ -920,13 +918,13 @@ guessed."""
                             text=_clean_praat_string(text),
                             t1=t1,
                             t2=t2,
-                            codec=codec
+                            codec=self.codec
                         )
                         tier.add(lab)
                         if item_re.search(line):  # Start new tier.
                             self.add(tier)
                             tier = self._read_praat_long_tier_metadata(
-                                f, codec=codec, mode=openargs['mode']
+                                f, mode=openargs['mode']
                             )
                         elif line == '': # Reached EOF
                             self.add(tier)
@@ -1051,7 +1049,7 @@ guessed."""
         end_head = re.compile('^#')
         empty_line = re.compile('^\s*(#.*)?$')
         
-        openargs = self._get_open_args(filename, codec=None)
+        openargs = self._get_open_args(filename)
         with open(filename, **openargs) as f:
             # Process the header
             while True:
@@ -1092,7 +1090,7 @@ guessed."""
  
     def read_wavesurfer(self, filename):
         """Read a wavesurfer label file."""
-        openargs = self._get_open_args(filename, codec=None)
+        openargs = self._get_open_args(filename)
         with open(filename, **openargs) as f:
             tier = IntervalTier()
             for line in f:
@@ -1102,7 +1100,7 @@ guessed."""
 
     def read_table(self, infile, sep='\t', fields_in_head=True,
                   t1_col='t1', t2_col='t2', fields=None, skiplines=0,
-                  t1_start=None, t1_step=None, codec=None):
+                  t1_start=None, t1_step=None):
         """Generic reader for tabular file data. infile can be a filename or
 open file handle. If t1_col is None, automatically create a t1 index with
 first value t1_start and adding t1_step for subsequent values."""
@@ -1110,10 +1108,10 @@ first value t1_start and adding t1_step for subsequent values."""
             t1_start = 0
         if t1_col is None and t1_step is None:
             t1_step = 1
-        if codec is None:
-            codec = 'utf-8'
+        if self.codec is None:
+            self.codec = 'utf-8'
         try:
-            openargs = self._get_open_args(infile, codec)
+            openargs = self._get_open_args(infile)
             f = open(infile, **openargs)
             binmode = openargs['mode'] == 'rb'
         except TypeError as e:  # infile should already be a file handle
@@ -1161,8 +1159,8 @@ first value t1_start and adding t1_step for subsequent values."""
         t1 = t2 = tstart = tend = None
         valsep = '\r\n'
         if binmode is True:
-            sep = sep.encode(codec)
-            valsep = valsep.encode(codec)
+            sep = sep.encode(self.codec)
+            valsep = valsep.encode(self.codec)
         for idx, line in enumerate([l for l in f.readlines() if l != '']):
             vals = [val.strip() for val in line.rstrip(valsep).split(sep)]
             if t1_start is not None and t1_step is not None:
@@ -1171,12 +1169,12 @@ first value t1_start and adding t1_step for subsequent values."""
                     vals.pop(t1idx)
             else:
                 t1 = vals.pop(t1idx)
-                if binmode is True: t1 = t1.decode(codec)
+                if binmode is True: t1 = t1.decode(self.codec)
             if tstart == None: tstart = t1
             if t2idx != None: t2 = vals.pop(t2idx)
-            if binmode is True and t2 is not None: t2 = t2.decode(codec)
+            if binmode is True and t2 is not None: t2 = t2.decode(self.codec)
             for tier, val in zip(tiers, vals):
-                if binmode is True: val = val.decode(codec)
+                if binmode is True: val = val.decode(self.codec)
                 tier.add(Label(text=val, t1=t1, t2=t2))
 
         # Finish the tier.
