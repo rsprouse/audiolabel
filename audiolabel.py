@@ -310,7 +310,7 @@ from an iterable."""
 Please use as_string() instead.
 '''
         )
-        self.as_string(fmt=fmt)
+        return self.as_string(fmt=fmt)
 
     def as_string(self, fmt=None):
         """Return the tier as a string of label file type fmt. To be implemented in a subclass."""
@@ -337,7 +337,7 @@ class PointTier(_LabelTier):
 Please use as_string() instead.
 '''
         )
-        self.as_string(fmt=fmt)
+        return self.as_string(fmt=fmt)
 
     def as_string(self, fmt=None):
         """Return the tier as a string of type fmt."""
@@ -409,7 +409,7 @@ class IntervalTier(_LabelTier):
 Please use as_string() instead.
 '''
         )
-        self.as_string(fmt=fmt)
+        return self.as_string(fmt=fmt)
 
     def as_string(self, fmt=None):
         """Return the tier as a string of type fmt."""
@@ -559,7 +559,7 @@ class LabelManager(collections.MutableSet):
 Please use as_string() instead.
 '''
         )
-        self.as_string(fmt=fmt)
+        return self.as_string(fmt=fmt)
 
     def as_string(self, fmt=None):
         """Return the tier as a string of type fmt."""
@@ -577,7 +577,7 @@ Please use as_string() instead.
             for idx,tier in enumerate(self._tiers):
                 tier = '\n'.join((
                     "    item [{:d}]:".format(idx+1),
-                    tier._as_string('praat_long')
+                    tier.as_string('praat_long')
                 ))
                 tiers.append(tier)
             return '\n'.join(tiers)
@@ -592,7 +592,7 @@ Please use as_string() instead.
                 '{:d}'.format(len(self._tiers))
             ]
             for tier in self._tiers:
-                tiers.append(tier._as_string('praat_short'))
+                tiers.append(tier.as_string('praat_short'))
             return '\n'.join(tiers)
         elif fmt == 'esps':
             # TODO: implement
@@ -720,39 +720,39 @@ Python 3 (automatically decodes text files) or Python 2 (does not decode).
             openargs = {'mode': 'rb'}
         return openargs
 
-    def guess_praat_encoding(self, filename):
+    def detect_praat_encoding(self, filename):
         '''Guess and return the encoding of a file from the BOM. Limited to 'utf_8',
-'utf_16_be', and 'utf_16_le'. Assume 'ascii' if no BOM.'''
+'utf_16_be', and 'utf_16_le'. Assume 'utf-8' if no BOM.'''
         has_bom = True
         # We want to read in binary mode under Python 2 or 3.
         with open(filename, 'rb') as f:
             firstline = f.readline()
             if firstline.startswith(codecs.BOM_UTF16_LE):
-                guessed_codec = 'utf_16_le'
+                detected_codec = 'utf_16_le'
             elif firstline.startswith(codecs.BOM_UTF16_BE):
-                guessed_codec = 'utf_16_be'
+                detected_codec = 'utf_16_be'
             elif firstline.startswith(codecs.BOM_UTF8):
-                guessed_codec = 'utf_8'
+                detected_codec = 'utf-8'
             else:
-                guessed_codec = 'ascii'
+                detected_codec = 'utf-8'
                 has_bom = False
-        return (guessed_codec, has_bom)
+        return (detected_codec, has_bom)
 
     def set_praat_encoding(self, filename):
         '''Set codec attribute for a Praat textgrid based on special logic. First
 determine if the textgrid has a BOM. If BOM exists, use the codec that
 it indicates. If it does not exist, use the codec suggested by the user. If user
-does not suggest a codec, use default encoding.'''
-        guessed_codec, has_bom = self.guess_praat_encoding(filename)
+does not suggest a codec, use utf-8 encoding as default.'''
+        detected_codec, has_bom = self.detect_praat_encoding(filename)
         if has_bom is True:  # Trust BOM.
-            if self.codec is not None and (self.codec != guessed_codec):
+            if self.codec is not None and (self.codec != detected_codec):
                sys.stderr.write(
                    '''WARNING: overriding user-specified encoding {:}.
-Found BOM for {:} encoding.\n'''.format(self.codec, guessed_codec)
+Found BOM for {:} encoding.\n'''.format(self.codec, detected_codec)
                )
-            self.codec = guessed_codec
+            self.codec = detected_codec
         elif self.codec is None:  # Default
-            self.codec = guessed_codec
+            self.codec = detected_codec
 
     def read_praat(self, filename):
         """Populate labels by reading in a Praat file. The short/long format will be
