@@ -306,6 +306,13 @@ from an iterable."""
     # TODO: come up with a good name and calling convention, then make 
     # this a normal (non-hidden) method; change in subclasses too.
     def _as_string(self, fmt=None):
+        sys.stderr.write('''WARNING: _as_string() is deprecated and will be removed in a later version.
+Please use as_string() instead.
+'''
+        )
+        self.as_string(fmt=fmt)
+
+    def as_string(self, fmt=None):
         """Return the tier as a string of label file type fmt. To be implemented in a subclass."""
         pass
     
@@ -326,6 +333,13 @@ class PointTier(_LabelTier):
         return s + " )</p>"
 
     def _as_string(self, fmt=None):
+        sys.stderr.write('''WARNING: _as_string() is deprecated and will be removed in a later version.
+Please use as_string() instead.
+'''
+        )
+        self.as_string(fmt=fmt)
+
+    def as_string(self, fmt=None):
         """Return the tier as a string of type fmt."""
         if fmt == 'praat_long':
             labels = [
@@ -391,6 +405,13 @@ class IntervalTier(_LabelTier):
         return s + " )</p>"
 
     def _as_string(self, fmt=None):
+        sys.stderr.write('''WARNING: _as_string() is deprecated and will be removed in a later version.
+Please use as_string() instead.
+'''
+        )
+        self.as_string(fmt=fmt)
+
+    def as_string(self, fmt=None):
         """Return the tier as a string of type fmt."""
         if fmt == 'praat_long':
             labels = [
@@ -534,6 +555,13 @@ class LabelManager(collections.MutableSet):
         return s + " )<p>"
         
     def _as_string(self, fmt=None):
+        sys.stderr.write('''WARNING: _as_string() is deprecated and will be removed in a later version.
+Please use as_string() instead.
+'''
+        )
+        self.as_string(fmt=fmt)
+
+    def as_string(self, fmt=None):
         """Return the tier as a string of type fmt."""
         if fmt == 'praat_long':
             tiers = [
