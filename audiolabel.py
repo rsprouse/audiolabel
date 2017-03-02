@@ -53,7 +53,7 @@ class Label(object):
     """An individual annotation."""
     
     def __init__(self, text='', t1=None, t2=None, appdata=None, metadata=None,
-                 codec='utf_8', *args, **kwargs):
+                 codec='utf-8', *args, **kwargs):
         super(Label, self).__init__()
         if t1 == None:
             raise LabelTimeValueError('Missing t1 argument in __init__().')
@@ -66,7 +66,7 @@ class Label(object):
         except TypeError:         # t2 == None
             self._t2 = None
         self.text = text
-        self._codec = codec
+        self.codec = codec
         self.appdata = appdata     # Container for app-specific data not used
                                    # by this class.
         
@@ -77,7 +77,7 @@ class Label(object):
             t2str = "t2={t2:0.4f}, ".format(t2=self._t2)
         text = self.text
         try:
-            text = self.text.encode(self._codec)
+            text = self.text.encode(self.codec)
         except NameError:
             pass
         return "Label( t1={t1:0.4f}, {t2}text='{text}' )".format(
@@ -249,14 +249,14 @@ from an iterable."""
             return [(l,m) \
                     for l in labels \
                     # TODO: verify that *not* encoding is the correct thing to do
-#                    for m in [pattern.search(l.text.encode(l._codec))] \
+#                    for m in [pattern.search(l.text.encode(l.codec))] \
                     for m in [pattern.search(l.text)] \
                     if m]
         else:
             return [l \
                     for l in labels \
                     # TODO: verify that *not* encoding is the correct thing to do
-#                    if pattern.search(l.text.encode(l._codec))]
+#                    if pattern.search(l.text.encode(l.codec))]
                     if pattern.search(l.text)]
         
 
