@@ -1214,44 +1214,4 @@ first value t1_start and adding t1_step for subsequent values."""
             tier.start = tstart
             tier.end = tend
             self.add(tier)
-            
 
-                
-if __name__ == '__main__':
-    # FIXME: Remove this when done developing.
-#    samplefile='C:\\Users\\ronald\\Desktop\\49_00_14_38_tony_49.TextGrid'
-#    lm = LabelManager()
-#    lm.read(samplefile)
-#    print lm.tier('word').search('^FEEL$')
-
-#    samplefile='C:\\src\\42_00_06_24_lynn_42.TextGrid'
-#    lm2 = LabelManager()
-#    lm2.read_praat_long(samplefile)
-#    print lm2.tier('word').search('^she$')
-
-
-#    samplefile='C:\\src\\phonlab\\annopy\\data\\s1703a.words'
-#    lm4 = LabelManager()
-#    lm4.read_esps(samplefile)
-#    print lm4.tier(0).search('SIL')
-#    print lm4.labels_at(1)
-
-#    samplefile='C:\\src\\phonlab\\annopy\\data\\wavesurfer1.lab'
-#    lm5 = LabelManager()
-#    lm5.read_wavesurfer(samplefile)
-#
-#    lm = LabelManager(from_file='test/this_is_a_label_file.short.TextGrid', from_type='praat_short')
-#    lm._get_praat_header()
-#    vre = re.compile(
-#         "(?P<vowel>zh|zhw|i|in|e|u|eu|ae|a)(?P<stress>\d)?"
-#    )
-#    um = LabelManager(from_file='c:/users/ronald/downloads/jiangbei-15.TextGrid', from_type='praat')
-#    am = LabelManager(from_file='c:/users/ronald/downloads/jiangbei-15_v.TextGrid', from_type='praat')
-#    ul = um.tier('vowel').search(vre, return_match=True)
-#    al = am.tier('vowel').search(vre, return_match=True)
-#    tempifc = 'c:/users/ronald/Desktop/t.txt'
-#    ifc = LabelManager(from_file=tempifc, from_type='table', t1_col='sec')
-#    meas = ifc.labels_at(0.15)
-    pass
-#    lm = LabelManager(from_file='test/Turkmen_NA_20130919_G_3.TextGrid', from_type='praat')
-    #pass
