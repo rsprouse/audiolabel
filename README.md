@@ -88,6 +88,8 @@ The `tslice()` method works much like array slicing, but uses time-based indexin
         print(word.t1, word.text)
 ```
 
+For more on `tslice()` see the 'Slicing and indexing' section.
+
 The `search()` method returns a list of Label objects that match a regular expression pattern. The pattern can be provided as a string or as a precompiled regular expression.
 
 ```
@@ -142,4 +144,69 @@ Labels that represent intervals rather than points in time have additional meani
    print(word.duration) # duration of the interval
 ```
 
+# Slicing and indexing
+
+A label tier is a Python list and individual Label objects can be accessed with the usual integer indexing:
+
+```
+firstw = wordtier[0]  # first label in wordtier
+threew = wordtier[:3] # list (slice) of first three labels
+lastw = wordtier[-1]  # last label
+```
+
+Integer indexing is most useful for accessing the first and last labels in a tier. For non-initial, non-final Labels it is usually more convenient to use `label_at()` or `tslice()`.
+
+The `label_at()` and `tslice()` methods provide an analog to integer indexing based on timestamps. However, the semantics of `tslice()` are a little different than what you find for ranges specified by integer indexes. Integer indexes always identify specific list elements, and time-based slicing can be ambiguous, especially for IntervalTiers. Consider this IntervalTier and a slice between 0.8 and 4.2 seconds (s1 and s2):
+
+```
+tier = audiolabel.IntervalTier()
+for t1 in (range(5)):
+    tier.add(audiolabel.Label(t1=float(t1), t2=float(t1+1), text = 'label' + str(t1)))
+
+# Representation of tier
+#    |          |          |          |         |          |
+#    |  label0  |  label1  |  label2  |  label3 |  label4  |
+#    |          |          |          |         |          |
+#   0.0        1.0        2.0        3.0       4.0        5.0
+#            ^                                     ^
+#            |               <slice>               |
+#            s1                                    s2
+```
+
+In this slice 'label0' and 'label4' partially overlap the specified interval. By default `tslice()` returns these partial overlaps, and you can exclude them by setting the `lstrip` ('left strip') and `rstrip` ('right strip') parameters to True:
+
+```
+tier.tslice(0.8, 4.2)                           # returns 'label0' through 'label4'
+tier.tslice(0.8, 4.2, lstrip=True, rstrip=True) # returns 'label1' through 'label3'
+tier.tslice(0.8, 4.2, lstrip=True)              # returns 'label1' through 'label4'
+tier.tslice(0.8, 4.2, rstrip=True)              # returns 'label0' through 'label3'
+```
+
+Now consider a slice between 1.0 and 4.0 seconds:
+
+```
+#    |          |          |          |         |          |
+#    |  label0  |  label1  |  label2  |  label3 |  label4  |
+#    |          |          |          |         |          |
+#   0.0        1.0        2.0        3.0       4.0        5.0
+#               ^                               ^
+#               |            <slice>            |
+#               s1                              s2
+```
+
+The timepoints of this slice correspond to the boundary shared between two Labels. By default `tslice()` returns all the Labels matched by the timepoints, 'label0' through 'label4'. You can exclude the labels that only match at the edges by setting the `lincl` ('left include') and `rincl` ('right include) parameters to False:
+
+```
+    tier.tslice(1.0, 4.0)                           # returns 'label0' through 'label4'
+    tier.tslice(1.0, 4.0, lincl=False, rincl=False) # returns 'label1' through 'label3'
+    tier.tslice(1.0, 4.0, lincl=False)              # returns 'label1' through 'label4'
+    tier.tslice(1.0, 4.0, rincl=False)              # returns 'label0' through 'label3'
+```
+
+In addition to the boundary ambiguity, there can be difficulty in comparing floating point values for equivalence. It is common to find that Labels on different annotation tiers are slightly misaligned. Sometimes this misalignment is not obvious and might be the result of truncation or roundoff errors in the normal course of processing files. In such cases, the misalignments are usually not meaningful, and you can relax the comparison so that values that are close to each other are considered to be equal. By default the tolerance of the comparison requires exact matches in order for two time values to be equal. You can use the `tol` parameter to relax the tolerance at both edges, and the `ltol` and `rtol` are added to `tol` to further adjust the left and right edges of `tslice()`:
+
+```
+tier.tslice(1.0001, 3.9999)                          # returns 'label1' through 'label3'
+tier.tslice(1.0001, 3.9999, tol=0.01)                # returns 'label0' through 'label4'
+```
 
