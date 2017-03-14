@@ -485,6 +485,10 @@ Please use as_string() instead.
             sl = [l for l in self._list if (l.t2 > left and l.t1 <= right) ]
         else:
             sl = [l for l in self._list if (l.t2 > left and l.t1 < right) ]
+        if lstrip is True and sl[0].t1 < left:
+            sl = sl[1:]
+        if rstrip is True and sl[-1].t2 > right:
+            sl = sl[:-1]
         if t2 == None:
             if len(sl) > 1:
                 raise IndexError(
