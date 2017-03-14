@@ -200,6 +200,72 @@ def test_get_praat_header():
     assert len(lm._tiers) == 3
     assert lm.names == ('word', 'phone', 'stimulus')
 
+def test_tslice_incl():
+    tier = audiolabel.IntervalTier()
+    for t1 in (range(5)):
+        tier.add(
+            audiolabel.Label(
+                t1=float(t1), t2=float(t1+1), text = 'label' + str(t1)
+            )
+        )
+    s = tier.tslice(1.0, 4.0)
+    assert(len(s) == 5)
+    assert(s[0].text == 'label0')
+    assert(s[-1].text == 'label4')
+    s = tier.tslice(1.0, 4.0, lincl=False)
+    assert(len(s) == 4)
+    assert(s[0].text == 'label1')
+    assert(s[-1].text == 'label4')
+    s = tier.tslice(1.0, 4.0, rincl=False)
+    assert(len(s) == 4)
+    assert(s[0].text == 'label0')
+    assert(s[-1].text == 'label3')
+    s = tier.tslice(1.0, 4.0, lincl=False, rincl=False)
+    assert(len(s) == 3)
+    assert(s[0].text == 'label1')
+    assert(s[-1].text == 'label3')
+
+def test_tslice_strip():
+    tier = audiolabel.IntervalTier()
+    for t1 in (range(5)):
+        tier.add(
+            audiolabel.Label(
+                t1=float(t1), t2=float(t1+1), text = 'label' + str(t1)
+            )
+        )
+    s = tier.tslice(0.8, 4.2)
+    assert(len(s) == 5)
+    assert(s[0].text == 'label0')
+    assert(s[-1].text == 'label4')
+    s = tier.tslice(0.8, 4.2, lstrip=True)
+    assert(len(s) == 4)
+    assert(s[0].text == 'label1')
+    assert(s[-1].text == 'label4')
+    s = tier.tslice(0.8, 4.2, rstrip=True)
+    assert(len(s) == 4)
+    assert(s[0].text == 'label0')
+    assert(s[-1].text == 'label3')
+    s = tier.tslice(0.8, 4.2, lstrip=True, rstrip=True)
+    assert(len(s) == 3)
+    assert(s[0].text == 'label1')
+    assert(s[-1].text == 'label3')
+
+def test_tslice_tol():
+    tier = audiolabel.IntervalTier()
+    for t1 in (range(5)):
+        tier.add(
+            audiolabel.Label(
+                t1=float(t1), t2=float(t1+1), text = 'label' + str(t1)
+            )
+        )
+    s = tier.tslice(1.0001, 3.9999)
+    assert(len(s) == 3)
+    assert(s[0].text == 'label1')
+    assert(s[-1].text == 'label3')
+    s = tier.tslice(1.0001, 3.9999, tol=0.001)
+    assert(len(s) == 5)
+    assert(s[0].text == 'label0')
+    assert(s[-1].text == 'label4')
 
 if __name__ == '__main__':
     test_initialization()
@@ -216,3 +282,6 @@ if __name__ == '__main__':
     test_table_pipe()
     test_table_pipe_newlines()
     test_get_praat_header()
+    test_tslice_incl()
+    test_tslice_strip()
+    test_tslice_tol()
