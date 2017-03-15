@@ -208,5 +208,6 @@ In addition to the boundary ambiguity, there can be difficulty in comparing floa
 ```
 tier.tslice(1.0001, 3.9999)                          # returns 'label1' through 'label3'
 tier.tslice(1.0001, 3.9999, tol=0.01)                # returns 'label0' through 'label4'
+tier.tslice(1.0001, 3.9999, ltol=0.01)               # returns 'label0' through 'label3'
 tier.tslice(1.0001, 3.9999, tol=0.01, rtol=-0.01)    # returns 'label0' through 'label3'
 ```
