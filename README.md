@@ -154,7 +154,7 @@ threew = wordtier[:3] # list (slice) of first three labels
 lastw = wordtier[-1]  # last label
 ```
 
-Integer indexing is most useful for accessing the first and last labels in a tier. For non-initial, non-final Labels it is usually more convenient to use `label_at()` or `tslice()`.
+Integer indexing is most useful for accessing the first and last labels in a tier. For non-initial, non-final Labels it is usually more convenient to use the time-based methods `label_at()` and `tslice()`.
 
 The `label_at()` and `tslice()` methods provide an analog to integer indexing based on timestamps. However, the semantics of `tslice()` are a little different than what you find for ranges specified by integer indexes. Integer indexes always identify specific list elements, and time-based slicing can be ambiguous, especially for IntervalTiers. Consider this IntervalTier and a slice between 0.8 and 4.2 seconds (s1 and s2):
 
