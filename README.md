@@ -114,7 +114,7 @@ for phone, match in phontier.search(myre, return_match=True):
 The Labels in a tier are ordered chronologically, and the `next()` and `prev()` methods provide access to Labels that follow or precede another Label.
 
 ```
-# Print the content of all Labels containing 'r' and the following Label
+# Print the content of all Labels containing 'r' and the following Label content
 for word in wordtier.search('r'):
     print(word.text, wordtier.next(word).text)
 ```
@@ -156,12 +156,12 @@ lastw = wordtier[-1]  # last label
 
 Integer indexing is most useful for accessing the first and last labels in a tier. For non-initial, non-final Labels it is usually more convenient to use the time-based methods `label_at()` and `tslice()`.
 
-The `label_at()` and `tslice()` methods provide an analog to integer indexing based on timestamps. However, the semantics of `tslice()` are a little different than what you find for ranges specified by integer indexes. Integer indexes always identify specific list elements, and time-based slicing can be ambiguous, especially for IntervalTiers. Consider this IntervalTier and a slice between 0.8 and 4.2 seconds (s1 and s2):
+The `label_at()` and `tslice()` methods provide an analog to integer indexing based on timestamps. However, the semantics of `tslice()` are a little different than integer indexing. Integer indexes always identify specific list elements, and time-based slicing can be ambiguous, especially for IntervalTiers. Consider this IntervalTier and a slice between 0.8 and 4.2 seconds (s1 and s2):
 
 ```
 tier = audiolabel.IntervalTier()
 for t1 in (range(5)):
-    tier.add(audiolabel.Label(t1=float(t1), t2=float(t1+1), text = 'label' + str(t1)))
+    tier.add(audiolabel.Label(t1=float(t1), t2=float(t1+1), text='label'+str(t1)))
 
 # Representation of tier
 #    |          |          |          |         |          |
@@ -208,4 +208,5 @@ In addition to the boundary ambiguity, there can be difficulty in comparing floa
 ```
 tier.tslice(1.0001, 3.9999)                          # returns 'label1' through 'label3'
 tier.tslice(1.0001, 3.9999, tol=0.01)                # returns 'label0' through 'label4'
+tier.tslice(1.0001, 3.9999, tol=0.01, rtol=-0.01)    # returns 'label0' through 'label3'
 ```
