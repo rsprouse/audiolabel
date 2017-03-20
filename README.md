@@ -4,7 +4,7 @@ Python library for reading and writing label files for phonetic analysis (Praat,
 
 # Overview
 
-`audiolabel` reads phonetic labels files of various formats and parses them into three basic kinds of objects:
+`audiolabel` reads phonetic label files of various formats and parses them into three basic kinds of objects:
 
 1. Labels
 1. tiers in the form of PointTiers and IntervalTiers
