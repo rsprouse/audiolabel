@@ -31,9 +31,9 @@ print(lm.names)
 You can use the `tier()` method to access the tiers by name or by the tier index, with the first tier assigned index 0:
 
 ```
-phontier = lm.tier(0)
-wordtier = lm.tier('word')
-contexttier = lm.tier(2)
+phontier = lm.tier(0)        # Or: phontier = lm.tier('phone')
+wordtier = lm.tier('word')   # Or: wordtier = lm.tier(1)
+contexttier = lm.tier(2)     # Or: contexttier = lm.tier('context')
 ```
 
 Tier names are commonly found in Praat textgrids, but other label file types might not include names and require access to tiers by index.
@@ -42,9 +42,15 @@ The `labels_at()` method returns a tuple of Label objects from each of the tiers
 
 ```
 labels = lm.labels_at(1.0)   # Get Label from all tiers at time 1.0
-print(labels[0].text)        # Content of Label from phontier
-print(labels.word.text)      # Content of Label from wordtier
-print(labels[2].text)        # Content of Label from contexttier
+
+# Content of Label from phontier
+print(labels.phone.text)     # Or: labels.[0].text
+
+# Content of Label from wordtier
+print(labels.word.text)      # Or: labels[1].text
+
+# Content of Label from contexttier
+print(labels[2].text)        # Or: labels.context.text
 ```
 
 Notice that the tier name is an attribute of the namedtuple and not a string.
