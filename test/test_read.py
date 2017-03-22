@@ -84,6 +84,19 @@ def test_LabelManager_params():
     # shift_by is in the time units after scale_by is applied
     assert '{:0.4f}'.format(lm.tier(0)[1].t1) == '14.5320'
 
+def test_names_property():
+    lm = audiolabel.LabelManager(
+        from_file='test/this_is_a_label_file.short.TextGrid',
+        from_type='praat'
+    )
+    assert lm.names == ('word', 'phone', 'stimulus')
+    lm.names = ['sec','rms']
+    assert lm.names == ('sec', 'rms', 'stimulus')
+    lm.names = [None,'two']
+    assert lm.names == ('sec', 'two', 'stimulus')
+    lm.names = ['one','two','three']
+    assert lm.names == ('one', 'two', 'three')
+
 def test_praat_utf_8():
     lm = audiolabel.LabelManager(
         from_file='test/ipa.TextGrid',
@@ -295,6 +308,7 @@ if __name__ == '__main__':
     test_praat_short()
     test_praat_short_generic_fromtype()
     test_LabelManager_params()
+    test_names_property()
     test_praat_utf_8()
     test_praat_utf_16_be()
     test_praat_utf_16_be_warn()

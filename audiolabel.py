@@ -535,9 +535,7 @@ class LabelManager(collections.MutableSet):
             elif from_type == 'table':
                 self.read_table(from_file, **kwargs)
             if names is not None:
-                for idx, name in enumerate(self.names):
-                    if names[idx] is not None:   # None indicates no change
-                        self.tier(idx).name = names[idx]
+                self.names = names
             if scale_by is not None:
                 self.scale_by(scale_by)
             # shift_by must be in the new time units after scale_by is applied
@@ -549,6 +547,19 @@ class LabelManager(collections.MutableSet):
     def names(self):
         """Return a tuple of tier names."""
         return tuple([tier.name for tier in self._tiers])
+
+    @names.setter
+    def names(self, names):
+        """Set the name attributes in the LabelManager tiers, as specified
+by the list in names. There can be fewer elements in names than the number
+of tiers in the LabelManager. The strings in names are applied to the tiers
+in order until names is exhausted. Remaining tiers in the LabelManager are
+not renamed. To set a tier name to be empty use ''. The value None in
+names indicates that the corresponding tier name should not be changed
+from its current value."""
+        for idx, name in enumerate(names):
+            if names[idx] is not None:   # None indicates no change
+                self.tier(idx).name = names[idx]
 
     def __repr__(self):
         s = "LabelManager(tiers="
