@@ -511,8 +511,9 @@ Please use as_string() instead.
 class LabelManager(collections.MutableSet):
     """Manage one or more Tier objects."""
     
-    def __init__(self, appdata=None, from_file=None, from_type=None,
-                 codec=None, *args, **kwargs):
+    def __init__(self, from_file=None, from_type=None, 
+                 codec=None, names=None, scale_by=None, shift_by=None,
+                 appdata=None, *args, **kwargs):
         super(LabelManager, self).__init__()
         self._tiers = []
         self.codec = codec
@@ -533,6 +534,15 @@ class LabelManager(collections.MutableSet):
                 self.read_wavesurfer(from_file)
             elif from_type == 'table':
                 self.read_table(from_file, **kwargs)
+            if names is not None:
+                for idx, name in enumerate(self.names):
+                    if names[idx] is not None:   # None indicates no change
+                        self.tier(idx).name = names[idx]
+            if scale_by is not None:
+                self.scale_by(scale_by)
+            if shift_by is not None:
+                self.shift_by(shift_by)
+
 
     @property
     def names(self):
