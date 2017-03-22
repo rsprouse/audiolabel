@@ -1,0 +1,52 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 10.266122448979592 
+tiers? <exists> 
+size = 2 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "s1" 
+        xmin = 0 
+        xmax = 10.266122448979592 
+        intervals: size = 5 
+        intervals [1]:
+            xmin = 0 
+            xmax = 3.3900037802791885 
+            text = "" 
+        intervals [2]:
+            xmin = 3.3900037802791885 
+            xmax = 4.45657717390381 
+            text = "bat" 
+        intervals [3]:
+            xmin = 4.45657717390381 
+            xmax = 7.6661730343482715 
+            text = "" 
+        intervals [4]:
+            xmin = 7.6661730343482715 
+            xmax = 9.720314385032728 
+            text = "bet bít" 
+        intervals [5]:
+            xmin = 9.720314385032728 
+            xmax = 10.266122448979592 
+            text = "" 
+    item [2]:
+        class = "IntervalTier" 
+        name = "s2" 
+        xmin = 0 
+        xmax = 10.266122448979592 
+        intervals: size = 3 
+        intervals [1]:
+            xmin = 0 
+            xmax = 5.266382898692874 
+            text = "" 
+        intervals [2]:
+            xmin = 5.266382898692874 
+            xmax = 7.439032404224509 
+            text = "bat bat" 
+        intervals [3]:
+            xmin = 7.439032404224509 
+            xmax = 10.266122448979592 
+            text = "" 
