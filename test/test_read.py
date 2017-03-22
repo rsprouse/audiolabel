@@ -63,6 +63,27 @@ def test_praat_short_generic_fromtype():
     assert len(lm._tiers) == 3
     assert lm.names == ('word', 'phone', 'stimulus')
 
+# Test that names, scale_by, shift_by params work.
+def test_LabelManager_params():
+    lm = audiolabel.LabelManager(
+        from_file='test/this_is_a_label_file.short.TextGrid',
+        from_type='praat'
+    )
+    assert len(lm._tiers) == 3
+    assert lm.names == ('word', 'phone', 'stimulus')
+    assert '{:0.4f}'.format(lm.tier(0)[1].t1) == '0.0453'
+    lm = audiolabel.LabelManager(
+        from_file='test/this_is_a_label_file.short.TextGrid',
+        from_type='praat',
+        names=['sec','rms','f1'],
+        scale_by=100,
+        shift_by=10
+    )
+    assert len(lm._tiers) == 3
+    assert lm.names == ('sec', 'rms', 'f1')
+    # shift_by is in the time units after scale_by is applied
+    assert '{:0.4f}'.format(lm.tier(0)[1].t1) == '14.5320'
+
 def test_praat_utf_8():
     lm = audiolabel.LabelManager(
         from_file='test/ipa.TextGrid',
@@ -273,6 +294,7 @@ if __name__ == '__main__':
     test_praat_long_generic_fromtype()
     test_praat_short()
     test_praat_short_generic_fromtype()
+    test_LabelManager_params()
     test_praat_utf_8()
     test_praat_utf_16_be()
     test_praat_utf_16_be_warn()
