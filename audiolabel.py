@@ -540,6 +540,7 @@ class LabelManager(collections.MutableSet):
                         self.tier(idx).name = names[idx]
             if scale_by is not None:
                 self.scale_by(scale_by)
+            # shift_by must be in the new time units after scale_by is applied
             if shift_by is not None:
                 self.shift_by(shift_by)
 
