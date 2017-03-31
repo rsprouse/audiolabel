@@ -10,6 +10,7 @@ from __future__ import division
 
 import sys
 import numpy as np
+import pandas as pd
 import codecs
 import collections
 import copy
@@ -315,7 +316,11 @@ Please use as_string() instead.
     def as_string(self, fmt=None):
         """Return the tier as a string of label file type fmt. To be implemented in a subclass."""
         pass
-    
+
+    def as_df(self):
+        """Return the tier as a Pandas DataFrame. To be implemented in a subclass."""
+        pass
+
 class PointTier(_LabelTier):
     """A manager of (point) Label objects"""
     def __init__(self, start=0.0, end=float('inf'), name='', numlabels=None, *args, **kwargs):
@@ -378,6 +383,18 @@ Please use as_string() instead.
         elif fmt == 'wavesurfer':
             pass
             # TODO: implement
+
+    def as_df(self):
+        """Return the tier as a Pandas DataFrame."""
+        t1 = pd.TimeSeries(self._time)
+        t2 = pd.TimeSeries([np.nan] * len(t1))
+        text = pd.Series([None] * len(t1))
+        labtype = pd.Series(['point'] * len(t1))
+        for idx, label in enumerate(self):
+            text[idx] = label.text
+        df = pd.concat([t1, t2, text, labtype], axis=1)
+        df.columns = ['t1', 't2', 'text', 'ltype']
+        return df
 
     def add(self, label):
         """Add an annotation object."""
@@ -452,6 +469,19 @@ Please use as_string() instead.
         elif fmt == 'wavesurfer':
             pass
             # TODO: implement
+
+    def as_df(self):
+        """Return the tier as a Pandas DataFrame."""
+        t1 = pd.TimeSeries(self._time)
+        t2 = pd.TimeSeries([np.nan] * len(t1))
+        text = pd.Series([None] * len(t1))
+        labtype = pd.Series(['interval'] * len(t1))
+        for idx, label in enumerate(self):
+            t2[idx] = label.t2
+            text[idx] = label.text
+        df = pd.concat([t1, t2, text, labtype], axis=1)
+        df.columns = ['t1', 't2', 'text', 'ltype']
+        return df
 
     def add(self, label):
         """Add an annotation object."""
@@ -588,7 +618,7 @@ Please use as_string() instead.
         return self.as_string(fmt=fmt)
 
     def as_string(self, fmt=None):
-        """Return the tier as a string of type fmt."""
+        """Return the tiers as a string of type fmt."""
         if fmt == 'praat_long':
             tiers = [
                 'File type = "ooTextFile"',
@@ -626,6 +656,20 @@ Please use as_string() instead.
         elif fmt == 'wavesurfer':
             pass
             # TODO: implement
+
+    def as_df(self):
+        """Return the tiers as a Pandas DataFrame."""
+        lmdf = pd.DataFrame()
+        for idx, tier in enumerate(self._tiers):
+            df = tier.as_df()
+            cols = df.columns.tolist()
+            tidx = pd.Series([idx] * len(df))
+            tname = pd.Series([tier.name] * len(df))
+            newdf = pd.concat([df, tidx, tname], axis=1)
+            cols.extend(['tieridx', 'tiername'])
+            newdf.columns = cols
+            lmdf = pd.concat([lmdf, newdf])
+        return lmdf.reset_index(drop=True)
 
 #### Methods required by abstract base class ####
 
