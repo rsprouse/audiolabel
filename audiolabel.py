@@ -317,7 +317,7 @@ Please use as_string() instead.
         """Return the tier as a string of label file type fmt. To be implemented in a subclass."""
         pass
 
-    def as_df(self):
+    def as_df(self, includes=['duration', 'center']):
         """Return the tier as a Pandas DataFrame. To be implemented in a subclass."""
         pass
 
@@ -384,16 +384,33 @@ Please use as_string() instead.
             pass
             # TODO: implement
 
-    def as_df(self):
+    def as_df(self, includes=['duration', 'center']):
         """Return the tier as a Pandas DataFrame."""
         t1 = pd.TimeSeries(self._time)
         t2 = pd.TimeSeries([np.nan] * len(t1))
         text = pd.Series([None] * len(t1))
         labtype = pd.Series(['point'] * len(t1))
+        if 'duration' in includes:
+            dur = pd.Series([None] * len(t1), dtype=np.float64)
+        if 'center' in includes:
+            ctr = pd.Series([None] * len(t1), dtype=np.float64)
+
         for idx, label in enumerate(self):
             text[idx] = label.text
+            if 'duration' in includes:
+                dur[idx] = label.duration
+            if 'center' in includes:
+                ctr[idx] = label.center
+
+        cols = ['t1', 't2', 'text', 'ltype']
         df = pd.concat([t1, t2, text, labtype], axis=1)
-        df.columns = ['t1', 't2', 'text', 'ltype']
+        if 'duration' in includes:
+            cols.extend(['duration'])
+            df = pd.concat([df, dur], axis=1)
+        if 'center' in includes:
+            cols.extend(['center'])
+            df = pd.concat([df, ctr], axis=1)
+        df.columns = cols
         return df
 
     def add(self, label):
@@ -470,17 +487,34 @@ Please use as_string() instead.
             pass
             # TODO: implement
 
-    def as_df(self):
+    def as_df(self, includes=['duration', 'center']):
         """Return the tier as a Pandas DataFrame."""
         t1 = pd.TimeSeries(self._time)
         t2 = pd.TimeSeries([np.nan] * len(t1))
         text = pd.Series([None] * len(t1))
         labtype = pd.Series(['interval'] * len(t1))
+        if 'duration' in includes:
+            dur = pd.Series([None] * len(t1), dtype=np.float64)
+        if 'center' in includes:
+            ctr = pd.Series([None] * len(t1), dtype=np.float64)
+
         for idx, label in enumerate(self):
             t2[idx] = label.t2
             text[idx] = label.text
+            if 'duration' in includes:
+                dur[idx] = label.duration
+            if 'center' in includes:
+                ctr[idx] = label.center
+
+        cols = ['t1', 't2', 'text', 'ltype']
         df = pd.concat([t1, t2, text, labtype], axis=1)
-        df.columns = ['t1', 't2', 'text', 'ltype']
+        if 'duration' in includes:
+            cols.extend(['duration'])
+            df = pd.concat([df, dur], axis=1)
+        if 'center' in includes:
+            cols.extend(['center'])
+            df = pd.concat([df, ctr], axis=1)
+        df.columns = cols
         return df
 
     def add(self, label):
@@ -657,11 +691,11 @@ Please use as_string() instead.
             pass
             # TODO: implement
 
-    def as_df(self):
+    def as_df(self, includes=['duration', 'center']):
         """Return the tiers as a Pandas DataFrame."""
         lmdf = pd.DataFrame()
         for idx, tier in enumerate(self._tiers):
-            df = tier.as_df()
+            df = tier.as_df(includes=includes)
             cols = df.columns.tolist()
             tidx = pd.Series([idx] * len(df))
             tname = pd.Series([tier.name] * len(df))
