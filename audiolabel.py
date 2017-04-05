@@ -389,7 +389,8 @@ Please use as_string() instead.
         t1 = pd.Series(self._time)
         t2 = pd.Series([np.nan] * len(t1))
         text = pd.Series([None] * len(t1))
-        labtype = pd.Series(['point'] * len(t1), dtype='category')
+        labtype = pd.Series(['point'] * len(t1))
+        labtype = labtype.astype('category', ordered=False)
         if 'duration' in includes:
             dur = pd.Series([None] * len(t1), dtype=np.float64)
         if 'center' in includes:
@@ -492,7 +493,8 @@ Please use as_string() instead.
         t1 = pd.Series(self._time)
         t2 = pd.Series([np.nan] * len(t1))
         text = pd.Series([None] * len(t1))
-        labtype = pd.Series(['interval'] * len(t1), dtype='category')
+        labtype = pd.Series(['interval'] * len(t1))
+        labtype = labtype.astype('category', ordered=False)
         if 'duration' in includes:
             dur = pd.Series([None] * len(t1), dtype=np.float64)
         if 'center' in includes:
@@ -703,8 +705,8 @@ Please use as_string() instead.
             cols.extend(['tieridx', 'tiername'])
             newdf.columns = cols
             lmdf = pd.concat([lmdf, newdf])
-        lmdf.tieridx = lmdf.tieridx.astype('category')
-        lmdf.tiername = lmdf.tiername.astype('category')
+        lmdf.tieridx = lmdf.tieridx.astype('category', ordered=False)
+        lmdf.tiername = lmdf.tiername.astype('category', ordered=False)
         return lmdf.reset_index(drop=True)
 
 #### Methods required by abstract base class ####
