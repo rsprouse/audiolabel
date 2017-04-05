@@ -386,8 +386,8 @@ Please use as_string() instead.
 
     def as_df(self, includes=['duration', 'center']):
         """Return the tier as a Pandas DataFrame."""
-        t1 = pd.TimeSeries(self._time)
-        t2 = pd.TimeSeries([np.nan] * len(t1))
+        t1 = pd.Series(self._time)
+        t2 = pd.Series([np.nan] * len(t1))
         text = pd.Series([None] * len(t1))
         labtype = pd.Series(['point'] * len(t1))
         if 'duration' in includes:
@@ -489,8 +489,8 @@ Please use as_string() instead.
 
     def as_df(self, includes=['duration', 'center']):
         """Return the tier as a Pandas DataFrame."""
-        t1 = pd.TimeSeries(self._time)
-        t2 = pd.TimeSeries([np.nan] * len(t1))
+        t1 = pd.Series(self._time)
+        t2 = pd.Series([np.nan] * len(t1))
         text = pd.Series([None] * len(t1))
         labtype = pd.Series(['interval'] * len(t1))
         if 'duration' in includes:
