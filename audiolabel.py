@@ -384,34 +384,16 @@ Please use as_string() instead.
             pass
             # TODO: implement
 
-    def as_df(self, includes=['duration', 'center']):
+    def as_df(self):
         """Return the tier as a Pandas DataFrame."""
         t1 = pd.Series(self._time)
-        t2 = pd.Series([np.nan] * len(t1))
         text = pd.Series([None] * len(t1))
-        labtype = pd.Series(['point'] * len(t1))
-        labtype = labtype.astype('category', ordered=False)
-        if 'duration' in includes:
-            dur = pd.Series([None] * len(t1), dtype=np.float64)
-        if 'center' in includes:
-            ctr = pd.Series([None] * len(t1), dtype=np.float64)
 
         for idx, label in enumerate(self):
             text[idx] = label.text
-            if 'duration' in includes:
-                dur[idx] = label.duration
-            if 'center' in includes:
-                ctr[idx] = label.center
 
-        cols = ['t1', 't2', 'text', 'ltype']
-        df = pd.concat([t1, t2, text, labtype], axis=1)
-        if 'duration' in includes:
-            cols.extend(['duration'])
-            df = pd.concat([df, dur], axis=1)
-        if 'center' in includes:
-            cols.extend(['center'])
-            df = pd.concat([df, ctr], axis=1)
-        df.columns = cols
+        df = pd.concat([t1, text], axis=1)
+        df.columns = ['t1', 'text']
         return df
 
     def add(self, label):
@@ -489,12 +471,16 @@ Please use as_string() instead.
             # TODO: implement
 
     def as_df(self, includes=['duration', 'center']):
-        """Return the tier as a Pandas DataFrame."""
+        """Return the tier as a Pandas DataFrame.
+The includes parameter is a list of strings that identify precalculated
+columns to be included as a convenience. By default these columns are 
+'duration' (t2 - t1) and 'center' ((t2 + t1) / 2). Since the information
+in these columns can be calculated from t1 and t2 you can reduce the
+memory usage of the DataFrame by excluding one or both of these strings
+from the includes list."""
         t1 = pd.Series(self._time)
         t2 = pd.Series([np.nan] * len(t1))
         text = pd.Series([None] * len(t1))
-        labtype = pd.Series(['interval'] * len(t1))
-        labtype = labtype.astype('category', ordered=False)
         if 'duration' in includes:
             dur = pd.Series([None] * len(t1), dtype=np.float64)
         if 'center' in includes:
@@ -508,8 +494,8 @@ Please use as_string() instead.
             if 'center' in includes:
                 ctr[idx] = label.center
 
-        cols = ['t1', 't2', 'text', 'ltype']
-        df = pd.concat([t1, t2, text, labtype], axis=1)
+        cols = ['t1', 't2', 'text']
+        df = pd.concat([t1, t2, text], axis=1)
         if 'duration' in includes:
             cols.extend(['duration'])
             df = pd.concat([df, dur], axis=1)
@@ -693,21 +679,28 @@ Please use as_string() instead.
             pass
             # TODO: implement
 
-    def as_df(self, includes=['duration', 'center']):
-        """Return the tiers as a Pandas DataFrame."""
-        lmdf = pd.DataFrame()
-        for idx, tier in enumerate(self._tiers):
-            df = tier.as_df(includes=includes)
-            cols = df.columns.tolist()
-            tidx = pd.Series([idx] * len(df))
-            tname = pd.Series([tier.name] * len(df))
-            newdf = pd.concat([df, tidx, tname], axis=1)
-            cols.extend(['tieridx', 'tiername'])
-            newdf.columns = cols
-            lmdf = pd.concat([lmdf, newdf])
-        lmdf.tieridx = lmdf.tieridx.astype('category', ordered=False)
-        lmdf.tiername = lmdf.tiername.astype('category', ordered=False)
-        return lmdf.reset_index(drop=True)
+    def as_df(self, tiers=None, includes=['duration', 'center']):
+        """Return tiers as a list of Pandas DataFrames.
+The tiers parameter is a list of tier identifiers that indicate the tiers
+to be returned in the list of DataFrames. The identifiers may be tier names
+or indexes. If the tiers parameter is None (default), then DataFrames for
+all tiers are returned in the list.
+The includes parameter is a list of precalculated columns that are included
+in the DataFrames for convenience. By default these columns include 'duration'
+and 'center', which are calculated from the Label t1 and t2. If you need to
+reduce memory usage you can exclude one or both of these with
+includes=['duration'], includes=['center'], or includes=[]."""
+        if tiers is None:
+            tiers = np.arange(len(self._tiers))
+        dfs = []
+        for tierid in tiers:
+            tier = self.tier(tierid)
+            if isinstance(tier, IntervalTier):
+                df = self.tier(tierid).as_df(includes=includes)
+            else:
+                df = self.tier(tierid).as_df()
+            dfs.append(df)
+        return dfs
 
 #### Methods required by abstract base class ####
 
