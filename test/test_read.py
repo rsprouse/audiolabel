@@ -301,6 +301,24 @@ def test_tslice_tol():
     assert(s[0].text == 'label0')
     assert(s[-1].text == 'label4')
 
+def test_as_string_praat_short():
+    '''Test output of as_string(). Make sure to handle quotation marks.'''
+    lm = audiolabel.LabelManager(
+        from_file='test/quotes.TextGrid',
+        from_type='praat'
+    )
+    s = 'File type = "ooTextFile"\nObject class = "TextGrid"\n\n0.00000000000000000000\n1.00000000000000000000\n<exists>\n2\n"IntervalTier"\n"interval"\n0.000000000000\n1.000000000000\n2\n0.00000000000000000000\n0.50000000000000000000\n"""a\'b\'c""d e"""\n0.50000000000000000000\n1.00000000000000000000\n""\n"TextTier"\n"point"\n0.000000000000\n1.000000000000\n1\n0.50000000000000000000\n"""a\'b\'c""d e"""'
+    assert s == lm.as_string('praat_short')
+
+def test_as_string_praat_long():
+    '''Test output of as_string(). Make sure to handle quotation marks.'''
+    lm = audiolabel.LabelManager(
+        from_file='test/quotes.TextGrid',
+        from_type='praat'
+    )
+    s = 'File type = "ooTextFile"\nObject class = "TextGrid"\n\nxmin = 0.00000000000000000000\nxmax = 1.00000000000000000000\ntiers? <exists>\nsize = 2\nitem []:\n    item [1]:\n        class = "IntervalTier"\n        name = "interval"\n        xmin = 0.000000000000\n        xmax = 1.000000000000\n        intervals: size = 2\n        intervals [1]:\n            xmin = 0.00000000000000000000\n            xmax = 0.50000000000000000000\n            text = """a\'b\'c""d e"""\n        intervals [2]:\n            xmin = 0.50000000000000000000\n            xmax = 1.00000000000000000000\n            text = ""\n    item [2]:\n        class = "TextTier"\n        name = "point"\n        xmin = 0.000000000000\n        xmax = 1.000000000000\n        points: size = 1\n        points [1]:\n            number = 0.50000000000000000000\n            mark = """a\'b\'c""d e"""'
+    assert s == lm.as_string('praat_long')
+
 if __name__ == '__main__':
     test_initialization()
     test_praat_long()
@@ -321,3 +339,5 @@ if __name__ == '__main__':
     test_tslice_incl()
     test_tslice_strip()
     test_tslice_tol()
+    test_as_string_praat_short()
+    test_as_string_praat_long()
