@@ -358,7 +358,9 @@ Please use as_string() instead.
                 lab = '\n'.join((
                     "        points [{:d}]:".format(idx+1),
                     "            number = {:1.20f}".format(lab.t1),
-                    '            mark = "{:s}"'.format(lab.text)
+                    '            mark = "{:s}"'.format(
+                                     lab.text.replace('"', '""')
+                                 )
                 ))
                 labels.append(lab)
             return '\n'.join(labels)
@@ -373,7 +375,7 @@ Please use as_string() instead.
             for lab in self._list:
                 lab = '\n'.join((
                     "{:1.20f}".format(lab.t1),
-                    '"{:s}"'.format(lab.text)
+                    '"{:s}"'.format(lab.text.replace('"', '""'))
                 ))
                 labels.append(lab)
             return '\n'.join(labels)
@@ -443,7 +445,9 @@ Please use as_string() instead.
                     "        intervals [{:d}]:".format(idx+1),
                     "            xmin = {:1.20f}".format(lab.t1),
                     "            xmax = {:1.20f}".format(lab.t2),
-                    '            text = "{:s}"'.format(lab.text)
+                    '            text = "{:s}"'.format(
+                                     lab.text.replace('"', '""')
+                                 )
                 ))
                 labels.append(lab)
             return '\n'.join(labels)
@@ -459,7 +463,7 @@ Please use as_string() instead.
                 lab = '\n'.join((
                     "{:1.20f}".format(lab.t1),
                     "{:1.20f}".format(lab.t2),
-                    '"{:s}"'.format(lab.text)
+                    '"{:s}"'.format(lab.text.replace('"', '""'))
                 ))
                 labels.append(lab)
             return '\n'.join(labels)
