@@ -568,6 +568,8 @@ class LabelManager(collections.MutableSet):
     """Manage one or more Tier objects."""
 
 # TODO: decide on proper function name
+# TODO: make columns Categorical for those that make sense
+# TODO: drop python 2 support?
     @staticmethod
     def _to_dftiers(fname, ftype, codec=None, tiers=None, includes=['barename', 'fname', 'duration', 'center'], barename_re=None, stop_on_error=True, ignore_index=True):
         '''Read one or more label files and extract specified tiers as a list of
