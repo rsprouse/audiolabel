@@ -8,7 +8,7 @@ Created on Fri May 10 13:29:26 2013
 
 from __future__ import division
 
-import sys
+import os, sys
 import numpy as np
 import pandas as pd
 import codecs
@@ -566,7 +566,134 @@ from the includes list."""
 
 class LabelManager(collections.MutableSet):
     """Manage one or more Tier objects."""
+
+# TODO: decide on proper function name
+    @staticmethod
+    def _to_dftiers(fname, ftype, codec=None, tiers=None, includes=['barename', 'fname', 'duration', 'center'], barename_re=None, stop_on_error=True, ignore_index=True):
+        '''Read one or more label files and extract specified tiers as a list of
+dataframes, one dataframe per tier. Each tier dataframe will contain a row
+for every label found in the specified tier from each of the label files.
+An extra column is added to the tier dataframe that indicates which label
+file was the source of the label row.
+
+The label files are required to be similar--same type, same codec, and with
+identical tier names.
+
+Required parameters:
+
+fname = list of label file filenames; for a single file this parameter can be
+  provided as a string
+
+ftype = the label file type; must be one of 'praat', 'praat_short',
+  'praat_long', 'esps', 'wavesurfer'
+
+Optional parameters:
+
+codec = codec used to read the label files (e.g. 'utf-8', 'ascii');
+  If codec is None, then Praat textgrids will default to 'utf-8' unless a
+  file-specific encoding is detected. [default None]
+
+tiers = list of tier names or tier indexes to read into DataFrames. DataFrames
+  are returned in the same order as the list. If this parameter is not used
+  or None, then all tiers will be returned as DataFrames. Every input label
+  file must be compatible with the tier list.
+
+includes = list of additional DataFrame columns names to process and include
+  in output DataFrames. Possible column names and values provided are:
+  'barename': the label file's barename, with no path info or extension
+  'extension': the label file's extension
+  'dirname': the user-provided path to the label file without the filename
+  'fname': the filename as provided by the user in the fname parameter
+  'duration': the label duration
+  'center': the label midpoint
+   [default ['barename', 'fname', 'duration', 'center']]
+
+barename_re = regex used to parse the label file's barename. Named capture
+  groups in the regex become columns in the output data files. [default None]
+
+stop_on_error = boolean; when True an error in processing an input file will 
+  immediately reraise the error and no dataframes are returned; when False
+  the error message is sent to STDERR and file processing continues, if
+  possible. [default True]
+
+ignore_index = boolean; value is passed to pd.concat()'s ignore_index
+  parameter when DataFrames from a label file are concatenated to the
+  existing tier DataFrames. When True, each tier DataFrame will have
+  an index with range (0:N). When False, the index resets to 0 at the
+  first row for each label file.
+'''
+        re_groups = []
+        if barename_re is not None:
+            barename_re = re.compile(barename_re)  # In case passed as a string
+            try:
+                assert len(barename_re.groupindex) > 0
+                re_groups = [g for g in barename_re.groupindex.keys()]
+            except AssertionError:
+                raise LabelManagerError('No named captures in barename_re')
+
+        # Coerce to list if fname is a string.
+        try:
+            assert isinstance(fname, basestring) # Python 2
+            fname = [fname]
+        except AssertionError:
+            pass
+        except NameError:
+            try:
+                assert isinstance(fname, str) # Python 3
+                fname = [fname]
+            except AssertionError:
+                pass
     
+        # Separate out as_df() includes parameter.
+        asdf_includes = []
+        for inc in ('duration', 'center'):
+            if inc in includes:
+                asdf_includes.append(inc)
+
+        dfs = None
+        for f in fname:
+            dirname, basename = os.path.split(f)
+            barename, ext = os.path.splitext(basename)
+            if barename_re is not None:
+                m = barename_re.search(barename)
+                try:
+                    assert m is not None
+                except AssertionError:
+                    msg = "fname {:} doesn't match barename_re".format(barename)
+                    if stop_on_error is True:
+                        raise LabelManagerError(msg)
+                    else:
+                        sys.stderr.write(msg)
+                        continue
+
+            try:
+                lm = LabelManager(from_file=f, from_type=ftype, codec=codec)
+                tlist = lm.as_df(tiers=tiers, includes=asdf_includes)
+                if dfs is None:
+                    dfs = [pd.DataFrame() for t in tlist]
+            except Exception as e:
+                if stop_on_error is True:
+                    raise e
+                else:
+                    sys.stderr.write(e.msg())
+                    continue
+            for idx, tr in enumerate(tlist):
+                if barename_re is not None:
+                    tr = tr.assign(**m.groupdict())
+                incldict = {}
+                for inc in includes:
+                    if inc == 'barename':
+                        incldict['barename'] = barename
+                    elif inc == 'fname':
+                        incldict['fname'] = f
+                    elif inc == 'extension':
+                        incldict['extension'] = ext
+                    elif inc == 'dirname':
+                        incldict['dirname'] = dirname
+                tr = tr.assign(**incldict)
+                dfs[idx] = pd.concat([dfs[idx], tr], ignore_index=ignore_index)
+        return dfs
+ 
     def __init__(self, from_file=None, from_type=None, 
                  codec=None, names=None, scale_by=None, shift_by=None,
                  appdata=None, *args, **kwargs):
