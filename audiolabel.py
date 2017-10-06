@@ -603,11 +603,15 @@ tiers = list of tier names or tier indexes to read into DataFrames. DataFrames
 includes = list of additional DataFrame columns names to process and include
   in output DataFrames. Possible column names and values provided are:
   'barename': the label file's barename, with no path info or extension
-  'extension': the label file's extension
-  'dirname': the user-provided path to the label file without the filename
   'fname': the filename as provided by the user in the fname parameter
+  'dirname': the user-provided path to the label file without the filename
+  'fidx': the idx of the label file in fname
+  'extension': the label file's extension
   'duration': the label duration
   'center': the label midpoint
+# TODO: choose which alternative to use
+  'dur': the label duration
+  'midpt': the label midpoint
    [default ['barename', 'fname', 'duration', 'center']]
 
 barename_re = regex used to parse the label file's barename. Named capture
@@ -622,7 +626,7 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
   parameter when DataFrames from a label file are concatenated to the
   existing tier DataFrames. When True, each tier DataFrame will have
   an index with range (0:N). When False, the index resets to 0 at the
-  first row for each label file.
+  first row for each label file. [default True]
 '''
         re_groups = []
         if barename_re is not None:
@@ -653,7 +657,7 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
                 asdf_includes.append(inc)
 
         dfs = None
-        for f in fname:
+        for fidx, f in enumerate(fname):
             dirname, basename = os.path.split(f)
             barename, ext = os.path.splitext(basename)
             if barename_re is not None:
@@ -688,10 +692,16 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
                         incldict['barename'] = barename
                     elif inc == 'fname':
                         incldict['fname'] = f
-                    elif inc == 'extension':
-                        incldict['extension'] = ext
                     elif inc == 'dirname':
                         incldict['dirname'] = dirname
+                    elif inc == 'fidx':
+                        incldict['fidx'] = fidx
+                    elif inc == 'extension':
+                        incldict['extension'] = ext
+                    elif inc == 'dur':
+                        incldict['dur'] = tr.t2 - tr.t1
+                    elif inc == 'midpt':
+                        incldict['midpt'] = (tr.t1 + tr.t2) / 2
                 tr = tr.assign(**incldict)
                 dfs[idx] = pd.concat([dfs[idx], tr], ignore_index=ignore_index)
         return dfs
