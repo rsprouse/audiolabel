@@ -702,6 +702,10 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
         # Make a list of tier DataFrames.
         dfs = [pd.concat(lst, ignore_index=ignore_index) for lst in dflist]
         [df.rename(columns={'text': 'label'}, inplace=True) for df in dfs]
+        for df in dfs:
+            for c in df.columns:
+                if c in ('barename', 'fname', 'dirname', 'extension'):
+                    df[c] = df[c].astype('category')
         return dfs
  
     def __init__(self, from_file=None, from_type=None, 
