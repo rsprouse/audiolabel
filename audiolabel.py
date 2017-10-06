@@ -704,6 +704,7 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
                         incldict['midpt'] = (tr.t1 + tr.t2) / 2
                 tr = tr.assign(**incldict)
                 dfs[idx] = pd.concat([dfs[idx], tr], ignore_index=ignore_index)
+        [df.rename(columns={'text': 'label'}, inplace=True) for df in dfs]
         return dfs
  
     def __init__(self, from_file=None, from_type=None, 
