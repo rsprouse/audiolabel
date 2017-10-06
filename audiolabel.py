@@ -660,17 +660,25 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
         for fidx, f in enumerate(fname):
             dirname, basename = os.path.split(f)
             barename, ext = os.path.splitext(basename)
+            assigndict = {}  # Container for extra columns to assign()
             if barename_re is not None:
                 m = barename_re.search(barename)
                 try:
-                    assert m is not None
-                except AssertionError:
+                    assigndict = m.groupdict().copy()
+                except AttributeError:
                     msg = "fname {:} doesn't match barename_re".format(barename)
                     if stop_on_error is True:
                         raise LabelManagerError(msg)
                     else:
                         sys.stderr.write(msg)
                         continue
+            assigndict.update({
+                'barename': barename, 'fname': f, 'dirname': dirname,
+                'fidx': fidx, 'extension': ext
+            })
+            # Remove columns to assign() that are not in includes.
+            for k in [k for k in assigndict.keys() if k not in includes]:
+                assigndict.pop(k)
 
             try:
                 lm = LabelManager(from_file=f, from_type=ftype, codec=codec)
@@ -684,26 +692,14 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
                     sys.stderr.write(e.msg())
                     continue
             for idx, tr in enumerate(tlist):
-                assigndict = {}
-                if barename_re is not None:
-                    assigndict = m.groupdict().copy()
-                for inc in includes:
-                    if inc == 'barename':
-                        assigndict['barename'] = barename
-                    elif inc == 'fname':
-                        assigndict['fname'] = f
-                    elif inc == 'dirname':
-                        assigndict['dirname'] = dirname
-                    elif inc == 'fidx':
-                        assigndict['fidx'] = fidx
-                    elif inc == 'extension':
-                        assigndict['extension'] = ext
-                    elif inc == 'dur':
-                        assigndict['dur'] = tr.t2 - tr.t1
-                    elif inc == 'midpt':
-                        assigndict['midpt'] = (tr.t1 + tr.t2) / 2
+                if 'dur' in includes:
+                    assigndict.update({'dur': tr.t2 - tr.t1})
+                if 'midpt' in includes:
+                    assigndict.update({'midpt': (tr.t1 + tr.t2) / 2})
                 tr = tr.assign(**assigndict)
                 dflist[idx].append(tr)
+
+        # Make a list of tier DataFrames.
         dfs = [pd.concat(lst, ignore_index=ignore_index) for lst in dflist]
         [df.rename(columns={'text': 'label'}, inplace=True) for df in dfs]
         return dfs
