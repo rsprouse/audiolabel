@@ -662,13 +662,13 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
                     else:
                         sys.stderr.write(msg)
                         continue
-            assigndict.update({
+            poss_inc = {  # Possible columns to include.
                 'barename': barename, 'fname': f, 'dirname': dirname,
                 'fidx': fidx, 'ext': ext
-            })
-            # Remove columns to assign() that are not in includes.
-            for k in [k for k in assigndict.keys() if k not in includes]:
-                assigndict.pop(k)
+            }
+            for k, v in poss_inc.items():
+                if k in includes:
+                    assigndict.update({k: v})
 
             try:
                 lm = LabelManager(from_file=f, from_type=ftype, codec=codec)
