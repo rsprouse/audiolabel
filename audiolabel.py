@@ -568,10 +568,9 @@ class LabelManager(collections.MutableSet):
     """Manage one or more Tier objects."""
 
 # TODO: decide on proper function name
-# TODO: make columns Categorical for those that make sense
 # TODO: drop python 2 support?
     @staticmethod
-    def _to_dftiers(fname, ftype, codec=None, tiers=None, includes=['barename', 'fname', 'duration', 'center'], barename_re=None, stop_on_error=True, ignore_index=True):
+    def _to_dftiers(fname, ftype, codec=None, tiers=None, includes=['barename', 'fname', 'dur', 'midpt'], barename_re=None, stop_on_error=True, ignore_index=True):
         '''Read one or more label files and extract specified tiers as a list of
 dataframes, one dataframe per tier. Each tier dataframe will contain a row
 for every label found in the specified tier from each of the label files.
@@ -606,13 +605,10 @@ includes = list of additional DataFrame columns names to process and include
   'fname': the filename as provided by the user in the fname parameter
   'dirname': the user-provided path to the label file without the filename
   'fidx': the idx of the label file in fname
-  'extension': the label file's extension
-  'duration': the label duration
-  'center': the label midpoint
-# TODO: choose which alternative to use
+  'ext': the label file's extension
   'dur': the label duration
   'midpt': the label midpoint
-   [default ['barename', 'fname', 'duration', 'center']]
+   [default ['barename', 'fname', 'dur', 'midpt']]
 
 barename_re = regex used to parse the label file's barename. Named capture
   groups in the regex become columns in the output data files. [default None]
@@ -649,12 +645,6 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
                 fname = [fname]
             except AssertionError:
                 pass
-    
-        # Separate out as_df() includes parameter.
-        asdf_includes = []
-        for inc in ('duration', 'center'):
-            if inc in includes:
-                asdf_includes.append(inc)
 
         dflist = None
         for fidx, f in enumerate(fname):
@@ -674,7 +664,7 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
                         continue
             assigndict.update({
                 'barename': barename, 'fname': f, 'dirname': dirname,
-                'fidx': fidx, 'extension': ext
+                'fidx': fidx, 'ext': ext
             })
             # Remove columns to assign() that are not in includes.
             for k in [k for k in assigndict.keys() if k not in includes]:
@@ -682,7 +672,7 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
 
             try:
                 lm = LabelManager(from_file=f, from_type=ftype, codec=codec)
-                tlist = lm.as_df(tiers=tiers, includes=asdf_includes)
+                tlist = lm.as_df(tiers=tiers)
                 if dflist is None:
                     dflist = [[] for t in tlist] # list of lists
             except Exception as e:
@@ -702,10 +692,13 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
         # Make a list of tier DataFrames.
         dfs = [pd.concat(lst, ignore_index=ignore_index) for lst in dflist]
         [df.rename(columns={'text': 'label'}, inplace=True) for df in dfs]
+
+        # Cast some columns to type Categorical.
+        catset = set(('barename', 'fname', 'dirname', 'ext'))
         for df in dfs:
-            for c in df.columns:
-                if c in ('barename', 'fname', 'dirname', 'extension'):
-                    df[c] = df[c].astype('category')
+            for c in list(catset & set(df.columns)): # intersection with catset
+                df[c] = df[c].astype('category')
+
         return dfs
  
     def __init__(self, from_file=None, from_type=None, 
