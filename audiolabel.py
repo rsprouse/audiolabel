@@ -16,6 +16,110 @@ import collections
 import copy
 import re
 
+# TODO: decide on proper function name
+# TODO: drop python 2 support?
+#    @staticmethod
+def read_lab(fname, ftype, codec=None, tiers=None, addcols=[], stop_on_error=True, ignore_index=True):
+    '''Read one or more label files and extract specified tiers as a list of
+dataframes, one dataframe per tier. Each tier dataframe will contain a row
+for every label found in the specified tier from each of the label files.
+An extra column ('fname') is added to the tier dataframe that indicates which
+label file was the source of the label row.
+
+The label files are required to be similar--same type, same codec, and with
+identical tier names.
+
+Required parameters:
+
+fname = list of label file filenames; for a single file this parameter can be
+  provided as a string
+
+ftype = the label file type; must be one of 'praat', 'praat_short',
+  'praat_long', 'esps', 'wavesurfer'
+
+Optional parameters:
+
+codec = codec used to read the label files (e.g. 'utf-8', 'ascii');
+  If codec is None, then Praat textgrids will default to 'utf-8' unless a
+  file-specific encoding is detected. [default None]
+
+tiers = list of tier names or tier indexes to read into DataFrames. DataFrames
+  are returned in the same order as the list. If this parameter is not used
+  or None, then all tiers will be returned as DataFrames. Every input label
+  file must be compatible with the tier list.
+
+addcols = list of additional DataFrame columns names to process and include
+  in output DataFrames. Possible column names and values provided are:
+  'barename': the label file's barename, with no path info or extension
+  'dirname': the user-provided path to the label file without the filename
+  'ext': the label file's extension
+  'fidx': the idx of the label file in fname
+   [default []]
+
+stop_on_error = boolean; when True an error in processing an input file will 
+  immediately reraise the error and no dataframes are returned; when False
+  the error message is sent to STDERR and file processing continues, if
+  possible. [default True]
+
+ignore_index = boolean; value is passed to pd.concat()'s ignore_index
+  parameter when DataFrames from a label file are concatenated to the
+  existing tier DataFrames. When True, each tier DataFrame will have
+  an index with range (0:N). When False, the index resets to 0 at the
+  first row for each label file. [default True]
+'''
+    # Coerce to list if fname is a string.
+    try:
+        assert isinstance(fname, basestring) # Python 2
+        fname = [fname]
+    except AssertionError:
+        pass
+    except NameError:
+        try:
+            assert isinstance(fname, str) # Python 3
+            fname = [fname]
+        except AssertionError:
+            pass
+
+    dflist = None
+    for fidx, f in enumerate(fname):
+        dirname, basename = os.path.split(f)
+        barename, ext = os.path.splitext(basename)
+        assigndict = {'fname': f}  # Container for extra columns to assign()
+        poss_add = {  # Possible columns to add.
+            'barename': barename, 'fname': f, 'dirname': dirname,
+            'fidx': fidx, 'ext': ext
+        }
+        for k, v in poss_add.items():
+            if k in addcols:
+                assigndict.update({k: v})
+
+        try:
+            lm = LabelManager(from_file=f, from_type=ftype, codec=codec)
+            tlist = lm.as_df(tiers=tiers, includes=[])
+            if dflist is None:
+                dflist = [[] for t in tlist] # list of lists
+        except Exception as e:
+            if stop_on_error is True:
+                raise e
+            else:
+                sys.stderr.write(e.msg())
+                continue
+        for idx, tr in enumerate(tlist):
+            tr = tr.assign(**assigndict)
+            dflist[idx].append(tr)
+
+    # Make a list of tier DataFrames.
+    dfs = [pd.concat(lst, ignore_index=ignore_index) for lst in dflist]
+    [df.rename(columns={'text': 'label'}, inplace=True) for df in dfs]
+
+    # Cast some columns to type Categorical.
+    catset = set(('barename', 'fname', 'dirname', 'ext'))
+    for df in dfs:
+        for c in list(catset & set(df.columns)): # intersection with catset
+            df[c] = df[c].astype('category')
+
+    return dfs
+ 
 # Some convenience functions to be used in the classes.
 
 # Strip white space at edges, remove surrounding quotes, and unescape quotes.
@@ -567,140 +671,6 @@ from the includes list."""
 class LabelManager(collections.MutableSet):
     """Manage one or more Tier objects."""
 
-# TODO: decide on proper function name
-# TODO: drop python 2 support?
-    @staticmethod
-    def _to_dftiers(fname, ftype, codec=None, tiers=None, includes=['barename', 'fname', 'dur', 'midpt'], barename_re=None, stop_on_error=True, ignore_index=True):
-        '''Read one or more label files and extract specified tiers as a list of
-dataframes, one dataframe per tier. Each tier dataframe will contain a row
-for every label found in the specified tier from each of the label files.
-An extra column is added to the tier dataframe that indicates which label
-file was the source of the label row.
-
-The label files are required to be similar--same type, same codec, and with
-identical tier names.
-
-Required parameters:
-
-fname = list of label file filenames; for a single file this parameter can be
-  provided as a string
-
-ftype = the label file type; must be one of 'praat', 'praat_short',
-  'praat_long', 'esps', 'wavesurfer'
-
-Optional parameters:
-
-codec = codec used to read the label files (e.g. 'utf-8', 'ascii');
-  If codec is None, then Praat textgrids will default to 'utf-8' unless a
-  file-specific encoding is detected. [default None]
-
-tiers = list of tier names or tier indexes to read into DataFrames. DataFrames
-  are returned in the same order as the list. If this parameter is not used
-  or None, then all tiers will be returned as DataFrames. Every input label
-  file must be compatible with the tier list.
-
-includes = list of additional DataFrame columns names to process and include
-  in output DataFrames. Possible column names and values provided are:
-  'barename': the label file's barename, with no path info or extension
-  'fname': the filename as provided by the user in the fname parameter
-  'dirname': the user-provided path to the label file without the filename
-  'fidx': the idx of the label file in fname
-  'ext': the label file's extension
-  'dur': the label duration
-  'midpt': the label midpoint
-   [default ['barename', 'fname', 'dur', 'midpt']]
-
-barename_re = regex used to parse the label file's barename. Named capture
-  groups in the regex become columns in the output data files. [default None]
-
-stop_on_error = boolean; when True an error in processing an input file will 
-  immediately reraise the error and no dataframes are returned; when False
-  the error message is sent to STDERR and file processing continues, if
-  possible. [default True]
-
-ignore_index = boolean; value is passed to pd.concat()'s ignore_index
-  parameter when DataFrames from a label file are concatenated to the
-  existing tier DataFrames. When True, each tier DataFrame will have
-  an index with range (0:N). When False, the index resets to 0 at the
-  first row for each label file. [default True]
-'''
-        re_groups = []
-        if barename_re is not None:
-            barename_re = re.compile(barename_re)  # In case passed as a string
-            try:
-                assert len(barename_re.groupindex) > 0
-                re_groups = [g for g in barename_re.groupindex.keys()]
-            except AssertionError:
-                raise LabelManagerError('No named captures in barename_re')
-
-        # Coerce to list if fname is a string.
-        try:
-            assert isinstance(fname, basestring) # Python 2
-            fname = [fname]
-        except AssertionError:
-            pass
-        except NameError:
-            try:
-                assert isinstance(fname, str) # Python 3
-                fname = [fname]
-            except AssertionError:
-                pass
-
-        dflist = None
-        for fidx, f in enumerate(fname):
-            dirname, basename = os.path.split(f)
-            barename, ext = os.path.splitext(basename)
-            assigndict = {}  # Container for extra columns to assign()
-            if barename_re is not None:
-                m = barename_re.search(barename)
-                try:
-                    assigndict = m.groupdict().copy()
-                except AttributeError:
-                    msg = "fname {:} doesn't match barename_re".format(barename)
-                    if stop_on_error is True:
-                        raise LabelManagerError(msg)
-                    else:
-                        sys.stderr.write(msg)
-                        continue
-            poss_inc = {  # Possible columns to include.
-                'barename': barename, 'fname': f, 'dirname': dirname,
-                'fidx': fidx, 'ext': ext
-            }
-            for k, v in poss_inc.items():
-                if k in includes:
-                    assigndict.update({k: v})
-
-            try:
-                lm = LabelManager(from_file=f, from_type=ftype, codec=codec)
-                tlist = lm.as_df(tiers=tiers)
-                if dflist is None:
-                    dflist = [[] for t in tlist] # list of lists
-            except Exception as e:
-                if stop_on_error is True:
-                    raise e
-                else:
-                    sys.stderr.write(e.msg())
-                    continue
-            for idx, tr in enumerate(tlist):
-                if 'dur' in includes:
-                    assigndict.update({'dur': tr.t2 - tr.t1})
-                if 'midpt' in includes:
-                    assigndict.update({'midpt': (tr.t1 + tr.t2) / 2})
-                tr = tr.assign(**assigndict)
-                dflist[idx].append(tr)
-
-        # Make a list of tier DataFrames.
-        dfs = [pd.concat(lst, ignore_index=ignore_index) for lst in dflist]
-        [df.rename(columns={'text': 'label'}, inplace=True) for df in dfs]
-
-        # Cast some columns to type Categorical.
-        catset = set(('barename', 'fname', 'dirname', 'ext'))
-        for df in dfs:
-            for c in list(catset & set(df.columns)): # intersection with catset
-                df[c] = df[c].astype('category')
-
-        return dfs
- 
     def __init__(self, from_file=None, from_type=None, 
                  codec=None, names=None, scale_by=None, shift_by=None,
                  appdata=None, *args, **kwargs):
