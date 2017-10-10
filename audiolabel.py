@@ -16,9 +16,6 @@ import collections
 import copy
 import re
 
-# TODO: decide on proper function name
-# TODO: drop python 2 support?
-#    @staticmethod
 def read_label(fname, ftype, codec=None, tiers=None, addcols=[], stop_on_error=True, ignore_index=True):
     '''Read one or more label files and extract specified tiers as a list of
 dataframes, one dataframe per tier. Each tier dataframe will contain a row
