@@ -18,13 +18,20 @@ import re
 
 def read_label(fname, ftype, codec=None, tiers=None, addcols=[], stop_on_error=True, ignore_index=True):
     '''Read one or more label files and extract specified tiers as a list of
-dataframes, one dataframe per tier. Each tier dataframe will contain a row
-for every label found in the specified tier from each of the label files.
-An extra column ('fname') is added to the tier dataframe that indicates which
-label file was the source of the label row.
+dataframes, one dataframe per tier.
+
+Each tier dataframe will contain a row for every label found in the specified
+tier from each of the label files. Each row has a column indicating the
+start time of the label interval ('t1') and the end time ('t2'). The label
+text is in another column, named 'label' by default. If the tiers parameter
+is used and running under Python 3, the label column will be named with the
+tier name, if provided as a string and the string is a valid column name
+(e.g. doesn't contain spaces). A fourth column ('fname') is added to the
+tier dataframe that indicates which label file was the source of the label row.
 
 The label files are required to be similar--same type, same codec, and with
 identical tier names.
+
 
 Required parameters:
 
@@ -107,7 +114,14 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
 
     # Make a list of tier DataFrames.
     dfs = [pd.concat(lst, ignore_index=ignore_index) for lst in dflist]
-    [df.rename(columns={'text': 'label'}, inplace=True) for df in dfs]
+    for df, tier in zip(dfs, tiers):
+        tname = 'label'
+        try:
+            assert tier.isidentifier()
+            tname = tier
+        except (AssertionError, AttributeError):
+            pass
+        df.rename(columns={'text': tname}, inplace=True)
 
     # Cast some columns to type Categorical.
     catset = set(('barename', 'fname', 'dirname', 'ext'))
