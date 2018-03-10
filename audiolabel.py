@@ -47,10 +47,10 @@ codec = codec used to read the label files (e.g. 'utf-8', 'ascii');
   If codec is None, then Praat textgrids will default to 'utf-8' unless a
   file-specific encoding is detected. [default None]
 
-tiers = list of tier names or tier indexes to read into DataFrames. DataFrames
-  are returned in the same order as the list. If this parameter is not used
-  or None, then all tiers will be returned as DataFrames. Every input label
-  file must be compatible with the tier list.
+tiers = int, str, list-like; tier name(s) or tier index(es) to read into
+  DataFrames. DataFrames are returned in the same order as the list. If
+  this parameter is not used or None, then all tiers will be returned as
+  DataFrames. Every input label file must be compatible with the tier list.
 
 addcols = list of additional DataFrame columns names to process and include
   in output DataFrames. Possible column names and values provided are:
@@ -83,6 +83,24 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
             fname = [fname]
         except AssertionError:
             pass
+
+    if tiers is not None:
+        # Coerce to list if tiers is a string or int.
+        if isinstance(tiers, int):
+            tiers = [tiers]
+        else:
+            try:
+                assert isinstance(tiers, basestring) # Python 2
+                tiers = [tiers]
+            except AssertionError:
+                pass
+            except NameError:
+                try:
+                    assert isinstance(tiers, str) # Python 3
+                    tiers = [tiers]
+                except AssertionError:
+                    pass
+    print(tiers)
 
     dflist = None
     for fidx, f in enumerate(fname):
