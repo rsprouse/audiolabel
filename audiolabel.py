@@ -100,7 +100,6 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
                     tiers = [tiers]
                 except AssertionError:
                     pass
-    print(tiers)
 
     dflist = None
     for fidx, f in enumerate(fname):
