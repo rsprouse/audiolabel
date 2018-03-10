@@ -114,14 +114,23 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
 
     # Make a list of tier DataFrames.
     dfs = [pd.concat(lst, ignore_index=ignore_index) for lst in dflist]
-    for df, tier in zip(dfs, tiers):
-        tname = 'label'
-        try:
-            assert tier.isidentifier()
-            tname = tier
-        except (AssertionError, AttributeError):
-            pass
-        df.rename(columns={'text': tname}, inplace=True)
+
+    # Rename column containing label text content.
+    # If the tier parameter was not used, do not attempt to determine
+    # the tier names in case the input list of label files has an
+    # inconsistent number of tiers or tier names.
+    if tiers is None:
+        for df in dfs:
+            df.rename(columns={'text': 'label'}, inplace=True)
+    else:
+        for df, tier in zip(dfs, tiers):
+            tname = 'label'
+            try:
+                assert tier.isidentifier()
+                tname = tier
+            except (AssertionError, AttributeError):
+                pass
+            df.rename(columns={'text': tname}, inplace=True)
 
     # Cast some columns to type Categorical.
     catset = set(('barename', 'fname', 'dirname', 'ext'))
