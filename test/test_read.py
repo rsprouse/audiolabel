@@ -319,6 +319,48 @@ def test_as_string_praat_long():
     s = 'File type = "ooTextFile"\nObject class = "TextGrid"\n\nxmin = 0.00000000000000000000\nxmax = 1.00000000000000000000\ntiers? <exists>\nsize = 2\nitem []:\n    item [1]:\n        class = "IntervalTier"\n        name = "interval"\n        xmin = 0.000000000000\n        xmax = 1.000000000000\n        intervals: size = 2\n        intervals [1]:\n            xmin = 0.00000000000000000000\n            xmax = 0.50000000000000000000\n            text = """a\'b\'c""d e"""\n        intervals [2]:\n            xmin = 0.50000000000000000000\n            xmax = 1.00000000000000000000\n            text = ""\n    item [2]:\n        class = "TextTier"\n        name = "point"\n        xmin = 0.000000000000\n        xmax = 1.000000000000\n        points: size = 1\n        points [1]:\n            number = 0.50000000000000000000\n            mark = """a\'b\'c""d e"""'
     assert s == lm.as_string('praat_long')
 
+def test_read_label():
+    '''Test read_label() function.'''
+    [wddf, phdf, ctxtdf] = audiolabel.read_label(
+        'test/this_is_a_label_file.TextGrid', 'praat'
+    )
+    assert((wddf.columns == ['t1', 't2', 'label', 'fname']).all())
+    assert(wddf.shape == (6, 4))
+    assert(wddf.label[1] == 'This')
+    assert(ctxtdf.shape == (3, 4))
+    assert(ctxtdf.label[1] == '1')
+    assert(phdf.shape == (8, 4))
+    assert(phdf.label[2] == 'IH2')
+
+def test_read_label_tiers():
+    '''Test tiers parameter of read_label().'''
+    [phdf, wddf, ctxtdf] = audiolabel.read_label(
+        'test/this_is_a_label_file.TextGrid', 'praat', tiers=['phone', 'word', 2]
+    )
+    assert((wddf.columns == ['t1', 't2', 'word', 'fname']).all())
+    assert(wddf.shape == (6, 4))
+    assert(wddf.word[1] == 'This')
+    assert((phdf.columns == ['t1', 't2', 'phone', 'fname']).all())
+    assert(phdf.shape == (8, 4))
+    assert(phdf.phone[2] == 'IH2')
+    assert((ctxtdf.columns == ['t1', 't2', 'label', 'fname']).all())
+    assert(ctxtdf.shape == (3, 4))
+    assert(ctxtdf.label[1] == '1')
+
+def test_read_label_list():
+    '''Test reading a list of files.'''
+    [wddf] = audiolabel.read_label(
+        [
+            'test/this_is_a_label_file.TextGrid',
+            'test/Turkmen_NA_20130919_G_3.TextGrid'
+        ],
+        'praat',
+        tiers=['word']
+    )
+    assert((wddf.columns == ['t1', 't2', 'word', 'fname']).all())
+    assert(wddf.shape == (6, 4))
+    assert(wddf.word[1] == 'This')
+
 if __name__ == '__main__':
     test_initialization()
     test_praat_long()
@@ -341,3 +383,6 @@ if __name__ == '__main__':
     test_tslice_tol()
     test_as_string_praat_short()
     test_as_string_praat_long()
+    test_read_label()
+    test_read_label_tiers()
+    test_read_label_list()
