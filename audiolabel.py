@@ -1090,39 +1090,50 @@ guessed."""
 
     # Read the metadata section at the top of a tier in a praat_long file
     # referenced by f. Create a label tier from the metadata and return it.
+    # Return None if metadata could not be read.
     def _read_praat_long_tier_metadata(self, f, mode=None):
         d = dict(cls=None, tname=None, tstart=None, tend=None, numintvl=None)
-        line = f.readline()
-        if mode == 'rb':
-            line = line.decode(self.codec)
-        m = re.compile("class = \"(.+)\"").search(line)
-        d['cls'] = m.group(1)
-        line = f.readline()
-        if mode == 'rb':
-            line = line.decode(self.codec)
-        m = re.compile("name = \"(.+)\"").search(line)
-        d['tname'] = m.group(1)
-        line = f.readline()
-        if mode == 'rb':
-            line = line.decode(self.codec)
-        m = re.compile("xmin = (-?[\d.]+)").search(line)
-        d['tstart'] = m.group(1)
-        line = f.readline()
-        if mode == 'rb':
-            line = line.decode(self.codec)
-        m = re.compile("xmax = (-?[\d.]+)").search(line)
-        d['tend'] = m.group(1)
-        line = f.readline()
-        if mode == 'rb':
-            line = line.decode(self.codec)
-        m = re.compile("(?:intervals|points): size = (\d+)").search(line)
-        d['numintvl'] = m.group(1)
+        try:
+            line = f.readline()
+            assert(line != '')
+            if mode == 'rb':
+                line = line.decode(self.codec)
+            m = re.compile("class = \"(.+)\"").search(line)
+            d['cls'] = m.group(1)
+            line = f.readline()
+            assert(line != '')
+            if mode == 'rb':
+                line = line.decode(self.codec)
+            m = re.compile("name = \"(.+)\"").search(line)
+            d['tname'] = m.group(1)
+            line = f.readline()
+            assert(line != '')
+            if mode == 'rb':
+                line = line.decode(self.codec)
+            m = re.compile("xmin = (-?[\d.]+)").search(line)
+            d['tstart'] = m.group(1)
+            line = f.readline()
+            assert(line != '')
+            if mode == 'rb':
+                line = line.decode(self.codec)
+            m = re.compile("xmax = (-?[\d.]+)").search(line)
+            d['tend'] = m.group(1)
+            line = f.readline()
+            assert(line != '')
+            if mode == 'rb':
+                line = line.decode(self.codec)
+            m = re.compile("(?:intervals|points): size = (\d+)").search(line)
+            d['numintvl'] = m.group(1)
+        except AssertionError:
+            pass
         if d['cls'] == 'IntervalTier':
             tier = IntervalTier(start=d['tstart'], end=d['tend'], \
                                   name=d['tname'], numlabels=d['numintvl'])
-        else:
+        elif d['cls'] in ['TextTier', 'PointTier']:
             tier = PointTier(start=d['tstart'], end=d['tend'], \
                                   name=d['tname'], numlabels=d['numintvl'])
+        else:
+            tier = None
         return tier
 
     def read_praat_long(self, filename):
@@ -1155,14 +1166,19 @@ guessed."""
             
             # Don't use 'for line in f' loop construct since we use multiple
             # readline() calls in the loop.
-            grabbing_labels = True
             t1 = t2 = text = None
-            while grabbing_labels:
+            while tier is not None:
+                if len(tier._time) == 0:   # empty tier; go to next tier
+                    self.add(tier)
+                    f.readline() # skip "item [n]:' line 
+                    tier = self._read_praat_long_tier_metadata(
+                        f, mode=openargs['mode']
+                    )
+                    continue
                 toss = f.readline()  # skip "intervals|points [n]:" line
                 t1line = f.readline()
                 if openargs['mode'] == 'rb':
                     t1line = t1line.decode(self.codec)
-                #print t1line
                 m = t1_re.search(t1line)
                 t1 = float(m.group(1))
                 if isinstance(tier, IntervalTier):
@@ -1202,7 +1218,7 @@ guessed."""
                             )
                         elif line == '': # Reached EOF
                             self.add(tier)
-                            grabbing_labels = False
+                            tier = None
                         else:      # Found a new label line (intervals|points).
                             #f.seek(-len(line),1)  # Rewind to intervals|points.
                             f.seek(loc)
