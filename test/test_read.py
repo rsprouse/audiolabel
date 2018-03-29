@@ -390,7 +390,7 @@ def test_read_label_list():
         tiers=['word']
     )
     assert((wddf.columns == ['t1', 't2', 'word', 'fname']).all())
-    assert(wddf.shape == (6, 4))
+    assert(wddf.shape == (177, 4))
     assert(wddf.word[1] == 'This')
 
 if __name__ == '__main__':
