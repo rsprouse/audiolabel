@@ -45,6 +45,22 @@ def test_praat_long_generic_fromtype():
     assert len(lm._tiers) == 3
     assert lm.names == ('word', 'phone', 'stimulus')
 
+# Test reading of a Praat long TextGrid with empty tiers.
+def test_praat_long_empty_tier():
+    lm = audiolabel.LabelManager(
+        from_file='test/empty_tier.long.TextGrid',
+        from_type='praat'
+    )
+    assert len(lm._tiers) == 5
+    assert lm.names == (
+        'V1','empty_point_1','empty_interval','V2','empty_point_end'
+    )
+    assert(len(lm.tier('V1')) == 3)
+    assert(len(lm.tier('empty_point_1')) == 0)
+    assert(len(lm.tier('empty_interval')) == 0)
+    assert(len(lm.tier('V2')) == 4)
+    assert(len(lm.tier('empty_point_end')) == 0)
+
 # Test reading of a Praat short TextGrid.
 def test_praat_short():
     lm = audiolabel.LabelManager(
@@ -62,6 +78,22 @@ def test_praat_short_generic_fromtype():
     )
     assert len(lm._tiers) == 3
     assert lm.names == ('word', 'phone', 'stimulus')
+
+# Test reading of a Praat long TextGrid with empty tiers.
+def test_praat_short_empty_tier():
+    lm = audiolabel.LabelManager(
+        from_file='test/empty_tier.short.TextGrid',
+        from_type='praat'
+    )
+    assert len(lm._tiers) == 5
+    assert lm.names == (
+        'V1','empty_point_1','empty_interval','V2','empty_point_end'
+    )
+    assert(len(lm.tier('V1')) == 3)
+    assert(len(lm.tier('empty_point_1')) == 0)
+    assert(len(lm.tier('empty_interval')) == 0)
+    assert(len(lm.tier('V2')) == 4)
+    assert(len(lm.tier('empty_point_end')) == 0)
 
 # Test that names, scale_by, shift_by params work.
 def test_LabelManager_params():
@@ -365,8 +397,10 @@ if __name__ == '__main__':
     test_initialization()
     test_praat_long()
     test_praat_long_generic_fromtype()
+    test_praat_long_empty_tier()
     test_praat_short()
     test_praat_short_generic_fromtype()
+    test_praat_short_empty_tier()
     test_LabelManager_params()
     test_names_property()
     test_praat_utf_8()
