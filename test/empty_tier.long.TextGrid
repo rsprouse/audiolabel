@@ -1,0 +1,66 @@
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 2.3893333333333335 
+tiers? <exists> 
+size = 5 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "V1" 
+        xmin = 0 
+        xmax = 2.3893333333333335 
+        intervals: size = 3 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.42866303177722875 
+            text = "" 
+        intervals [2]:
+            xmin = 0.42866303177722875 
+            xmax = 0.6706659203884096 
+            text = "a" 
+        intervals [3]:
+            xmin = 0.6706659203884096 
+            xmax = 2.3893333333333335 
+            text = "" 
+    item [2]:
+        class = "TextTier" 
+        name = "empty_point_1" 
+        xmin = 0 
+        xmax = 2.3893333333333335 
+        points: size = 0 
+    item [3]:
+        class = "IntervalTier" 
+        name = "empty_interval" 
+        xmin = 0 
+        xmax = 2.3893333333333335 
+        intervals: size = 0
+    item [4]:
+        class = "IntervalTier" 
+        name = "V2" 
+        xmin = 0 
+        xmax = 2.3893333333333335 
+        intervals: size = 4 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.7336177309790747 
+            text = "" 
+        intervals [2]:
+            xmin = 0.7336177309790747 
+            xmax = 0.7532854009767517 
+            text = "" 
+        intervals [3]:
+            xmin = 0.7532854009767517 
+            xmax = 1.0137249602877758 
+            text = "a" 
+        intervals [4]:
+            xmin = 1.0137249602877758 
+            xmax = 2.3893333333333335 
+            text = "" 
+    item [5]:
+        class = "TextTier" 
+        name = "empty_point_end" 
+        xmin = 0 
+        xmax = 2.3893333333333335 
+        points: size = 0 
