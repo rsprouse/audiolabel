@@ -26,6 +26,7 @@ def test_initialization():
     assert t1.next(l1, skip=1) == l3
     assert t1.prev(l3) == l2
     assert t1.prev(l3, skip=1) == l1
+    assert t1.end == 4.0
 
 # Test reading of a Praat long TextGrid.
 def test_praat_long():

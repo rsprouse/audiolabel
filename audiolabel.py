@@ -654,7 +654,7 @@ from the includes list."""
         """Add an annotation object."""
         super(IntervalTier, self).add(label)
         if self.end == np.Inf or label.t2 > self.end:
-            self.end = label.t1
+            self.end = label.t2
             
     # TODO: add discard() and adjust self.end?
     
