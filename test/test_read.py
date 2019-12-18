@@ -168,6 +168,17 @@ def test_praat_utf_8_no_bom():
     assert lm.tier('s1').label_at(8.0).text == u"bet bít"
     assert lm.tier('s2').label_at(6.0).text == u"bat bat"
 
+def test_eaf():
+    lm = audiolabel.LabelManager(
+        from_file='test/v2test.eaf',
+        from_type='eaf'
+    )
+    assert len(lm._tiers) == 22
+    assert lm.tier('A_Transcription')[2].text == 'áas'
+    assert lm.tier('A_Transcription')[2].t1 == 188675.0
+    assert lm.tier('A_Translation')[2].text == 'bowl'
+    assert lm.tier('A_Translation')[2].t1 == 188675.0
+
 def test_esps():
     lm = audiolabel.LabelManager(
         from_file='test/sample.esps',
@@ -408,6 +419,7 @@ if __name__ == '__main__':
     test_praat_utf_16_be()
     test_praat_utf_16_be_warn()
     test_praat_utf_8_no_bom()
+    test_eaf()
     test_esps()
     test_table()
     test_table_pipe()

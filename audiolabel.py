@@ -3,7 +3,7 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.3.0
+@version: 0.4.0
 """
 
 from __future__ import division
@@ -282,6 +282,7 @@ class _LabelTier(collections.MutableSet):
         self.name = name
         self.start = float(start)
         self.end = float(end)
+        self.extra_data = {} # Container for additional file-specific data.
         self._list = []      # Container for Label objects.
         # Array of starting (t1) timepoints used for calculations.
         if numlabels == None:
@@ -1253,64 +1254,105 @@ guessed."""
 
     # TODO: this works for karuk .eaf files; need to find out whether this is sufficient for all
     # .eaf files
-    # This implementation does not retain all of the possible dependencies between tiers.
-    def read_eaf(self, filename):
+    # TODO: This implementation does not retain all of the possible dependencies between tiers.
+    #       This method should be rewritten to handle dependent tiers properly.
+    def read_eaf(self, filename, codec='utf_8'):
         """Read an ELAN .eaf file."""
+        # TODO: read encoding from xml document instead of hardcoding
+        # utf_8?
 
         import xml.etree.ElementTree as ET
         tree = ET.parse(filename)
         root = tree.getroot()
-        time_slots = root.find('./TIME_ORDER')
-        for eaftier in root.findall('./TIER'):
+        # Time subdivision tiers have sequences of annotations that
+        # subdivide a parent tier's duration. The individual annotations
+        # may have empty time slots. The first element in the sequence
+        # shares the parent tier's first time slot, and the last element
+        # of the sequence shares the parent's last time slot. All other
+        # time slots are empty.
+        tslots = {}
+        tslot_tiers = {'t1': {}, 't2': {}}
+        for slot in root.findall('.//TIME_ORDER/TIME_SLOT'):
+            slot_id = slot.get('TIME_SLOT_ID')
+            tslots[slot_id] = slot.get('TIME_VALUE')
+
+        # Sort the tier names so that parent tiers are processed, and their
+        # time slots filled out, before their children. That way we can
+        # calculate time values for the empty time slots before they are
+        # needed in the children.
+        tmap = {tier.get('TIER_ID'): tier.get('PARENT_REF') for tier in root.findall('./TIER')}
+        tiersort = []
+        tkeys = list(tmap.keys())
+        while len(tkeys) > 0:
+            for name in tkeys:
+                if tmap[name] is None or tmap[name] in tiersort:
+                    tiersort.append(name)
+                    tkeys.remove(name)
+
+        # Preserve tier order.
+        for idx,eaftier in enumerate(root.findall('./TIER')):
             tier = IntervalTier(name=eaftier.get('TIER_ID'))
-            # Time subdivision tiers have sequences of annotations that
-            # subdivide a parent tier's duration. The individual annotations
-            # may have empty time slots. The first element in the sequence
-            # shares the parent tier's first time slot, and the last element
-            # of the sequence shares the parent's last time slot. All other
-            # time slots are empty.
+            tier.extra_data['eaf'] = eaftier.attrib
+            self.add(tier)
+
+        # Process labels on parent tiers before dependent tiers so that
+        # timeslots are filled in properly in the dependents.
+        for name in tiersort:
+            tier = self.tier(name)
             anno_run = []
+            anno_run_length = None
+            start_t = None
+            end_t = None
+            eaftier = root.find(".//TIER/[@TIER_ID='{}']".format(name))
             for anno in eaftier.findall('ANNOTATION/*'):
+                anno_id = anno.get('ANNOTATION_ID')
                 if anno.tag == 'ALIGNABLE_ANNOTATION':
                     t_anno = anno
+                    anno_run_length = 1
+                    start_t = float(tslots[t_anno.get('TIME_SLOT_REF1')])
+                    end_t = float(tslots[t_anno.get('TIME_SLOT_REF2')])
                 elif anno.tag == 'REF_ANNOTATION':
+                    t_anno = None
                     ref = anno.get('ANNOTATION_REF')
-                    xpath = ".//ANNOTATION/ALIGNABLE_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
-                    t_anno = root.find(xpath)
+                    if anno_run_length is None:
+                        xpath = ".//TIER/[@TIER_ID='{}']/ANNOTATION/REF_ANNOTATION/[@ANNOTATION_REF='{}']".format(name,ref)
+                        anno_run_length = len(root.findall(xpath))
+                    start_t = float(tslot_tiers['t1'][ref])
+                    end_t = float(tslot_tiers['t2'][ref])
+                    # Tiers can be hierarchical. Loop through refs until we find the top.
+                    while t_anno is None:
+                        xpath = ".//ANNOTATION/REF_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
+                        try:
+                            ref = root.find(xpath).get('ANNOTATION_REF')
+                        except AttributeError:  # No more REF_ANNOTATION. At the top.
+                            xpath = ".//ANNOTATION/ALIGNABLE_ANNOTATION/[@ANNOTATION_ID='{}']".format(ref)
+                            t_anno = root.find(xpath)
+                            if t_anno is None:
+                                raise RuntimeError("Could not find annotation ref.")
                 else:
-                    raise RunTimeError("Unrecognized annotation type.")
-                times = []
-                for idx in ['1', '2']:
-                    ref = t_anno.get('TIME_SLOT_REF{}'.format(idx))
-                    xpath = "./TIME_SLOT/[@TIME_SLOT_ID='{}']".format(ref)
-                    times.append(time_slots.find(xpath).get('TIME_VALUE'))
-                text = anno.find('ANNOTATION_VALUE').text
-                # TODO: read encoding from xml document instead of hardcoding
-                # utf_8?
-                l = {}
-                try:
-                    l['text'] = text.decode('utf_8')
-                except AttributeError:
-                    l['text'] = ''
-                try:
-                    l['t1'] = float(times[0])
-                except TypeError:
-                    l['t1'] = None
-                try:
-                    l['t2'] = float(times[1])
-                except TypeError:
-                    l['t2'] = None
-                anno_run.append(l)
-                if times[1] != None:     # end of run
-                    step = (anno_run[-1]['t2'] - anno_run[0]['t1']) / len(anno_run)
-                    for idx,label in enumerate(anno_run):
-                        if label['t1'] == None:
-                            label['t1'] = anno_run[0]['t1'] + round(idx * step)
-                        if label['t2'] == None:
-                            label['t2'] = anno_run[0]['t1'] + round((idx + 1) * step)
-                        tier.add(Label(**label))
+                    raise RuntimeError("Unrecognized annotation type.")
+
+                anno_run.append((anno_id, anno.find('ANNOTATION_VALUE').text))
+                if len(anno_run) == anno_run_length:
+                    step = (end_t - start_t) / anno_run_length
+                    for idx,mypair in enumerate(anno_run):
+                        the_id = mypair[0]
+                        label = mypair[1]
+                        if label is None:
+                            label = ''
+                        t1 = start_t
+                        t2 = start_t + round((idx + 1) * step)
+                        if idx > 0:
+                            t1 += round(idx * step)
+                        if idx == (anno_run_length - 1):
+                            t2 = end_t
+                        tier.add(Label(text=label, t1=t1, t2=t2, codec=codec))
+                        tslot_tiers['t1'][the_id] = t1
+                        tslot_tiers['t2'][the_id] = t2
                     anno_run = []
-            self.add(tier)
+                    start_t = None
+                    end_t = None
+                    anno_run_length = None
 
     def read_esps(self, filename, sep=None):
         """Read an ESPS label file."""
