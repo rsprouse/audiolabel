@@ -3,7 +3,7 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.4.0
+@version: 0.5.0
 """
 
 from __future__ import division
@@ -1023,6 +1023,36 @@ guessed."""
                 raise LabelManagerParseError("File does not appear to be a Praat format.")
         
     def read_praat_short(self, filename):
+        # Regex that indicates end of a label for lines that include opening
+        # double quote.
+        labendre = re.compile(
+            '''
+                (?:^"|[^"])
+                (?:"")*      # Allow even number of preceding double quotes (Praat's way of including quotation marks in label content)
+                "            # Line terminates with double quote
+                \s*          # Ignore whitespace
+                $
+                |            # OR
+                ^\s*"\s*$    # Only double quote and optional whitespace
+            ''',
+            re.VERBOSE
+        )
+        # Regex that indicates end of a label for lines that do not include
+        # opening double quote, i.e. end of a multiline label text.
+        mlabendre = re.compile(
+            '''
+                (?:^|[^"])
+                (?:"")*      # Allow even number of preceding double quotes (Praat's way of including quotation marks in label content)
+                "            # Line terminates with double quote
+                \s*          # Ignore whitespace
+                $
+                |            # OR
+                ^\s*"\s*$    # Only double quote and optional whitespace
+            ''',
+            re.VERBOSE
+        )
+        # Regex that matches a label line that is exactly quotation marks.
+        onlyquotere = re.compile('^(?:"")+$')
         self.set_praat_encoding(filename)
         openargs = self._get_open_args(filename)
         with open(filename, **openargs) as f:
@@ -1078,6 +1108,16 @@ guessed."""
 
                         t2 = None
                     labtext = f.readline()
+                    if labendre.search(labtext.strip()) is None \
+                        and onlyquotere.match(labtext.strip()) is None:
+                        while True:
+                            addline = f.readline()
+                            labtext += addline
+                            if mlabendre.search(addline) is not None:
+                                break
+                            elif addline == '':
+                                msg = f"Parse error. Unterminated label '{labtext}' in tier '{tier.name}'."
+                                raise Exception(msg)
                     if openargs['mode'] == 'rb':
                         labtext = labtext.decode(self.codec)
                     lab = Label(
