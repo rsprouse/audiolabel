@@ -1116,7 +1116,7 @@ guessed."""
                             if mlabendre.search(addline) is not None:
                                 break
                             elif addline == '':
-                                msg = f"Parse error. Unterminated label '{labtext}' in tier '{tier.name}'."
+                                msg = "Parse error. Unterminated label '" + labtext + "' in tier '" + tier.name + "'."
                                 raise Exception(msg)
                     if openargs['mode'] == 'rb':
                         labtext = labtext.decode(self.codec)
