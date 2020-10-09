@@ -378,16 +378,16 @@ def test_as_string_praat_long():
 
 def test_read_label():
     '''Test read_label() function.'''
-    [wddf, phdf, ctxtdf] = audiolabel.read_label(
+    [phdf, wddf, ctxtdf] = audiolabel.read_label(
         'test/this_is_a_label_file.TextGrid', 'praat'
     )
     assert((wddf.columns == ['t1', 't2', 'label', 'fname']).all())
     assert(wddf.shape == (6, 4))
-    assert(wddf.label[1] == 'This')
+    assert(wddf.label[1] == 'IS')
     assert(ctxtdf.shape == (3, 4))
-    assert(ctxtdf.label[1] == '1')
-    assert(phdf.shape == (8, 4))
-    assert(phdf.label[2] == 'IH2')
+    assert(ctxtdf.label[1] == 'sad')
+    assert(phdf.shape == (15, 4))
+    assert(phdf.label[2] == 'S')
 
 def test_read_label_tiers():
     '''Test tiers parameter of read_label().'''
@@ -396,13 +396,13 @@ def test_read_label_tiers():
     )
     assert((wddf.columns == ['t1', 't2', 'word', 'fname']).all())
     assert(wddf.shape == (6, 4))
-    assert(wddf.word[1] == 'This')
+    assert(wddf.word[1] == 'IS')
     assert((phdf.columns == ['t1', 't2', 'phone', 'fname']).all())
-    assert(phdf.shape == (8, 4))
-    assert(phdf.phone[2] == 'IH2')
+    assert(phdf.shape == (15, 4))
+    assert(phdf.phone[2] == 'S')
     assert((ctxtdf.columns == ['t1', 't2', 'label', 'fname']).all())
     assert(ctxtdf.shape == (3, 4))
-    assert(ctxtdf.label[1] == '1')
+    assert(ctxtdf.label[1] == 'sad')
 
 def test_read_label_list():
     '''Test reading a list of files.'''
@@ -416,7 +416,7 @@ def test_read_label_list():
     )
     assert((wddf.columns == ['t1', 't2', 'word', 'fname']).all())
     assert(wddf.shape == (177, 4))
-    assert(wddf.word[1] == 'This')
+    assert(wddf.word[1] == 'IS')
 
 if __name__ == '__main__':
     test_initialization()
