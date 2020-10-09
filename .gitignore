@@ -41,3 +41,5 @@ nosetests.xml
 
 # Python notebooks
 .ipynb_checkpoints
+
+.DS_Store
