@@ -2,7 +2,56 @@
 
 Python library for reading and writing label files for phonetic analysis (Praat, ELAN, ESPS, Wavesurfer, tabular data).
 
-# Overview
+# Installing
+
+`audiolabel` can be installed with `pip`:
+
+```bash
+pip install git+https://github.com/rsprouse/audiolabel
+```
+
+You can also download and unpack this repository, then run `setup.py` manually:
+
+```bash
+cd audiolabel
+python setup.py install
+```
+
+# How to use
+
+The easiest way to get started is to launch the 'Using audiolabel' notebook on [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rsprouse/audiolabel/master?filepath=doc%2Fusing_audiolabel.ipynb) to learn how to read label files into dataframes. Or launch the 'Working with phonetic dataframes' notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rsprouse/audiolabel/master?filepath=doc%2Fworking_with_phonetic_dataframes.ipynb) for details on how to work with dataframes contain phonetic labels.
+
+The recommended way to use `audiolabel` is to import the `read_label` function and create Pandas dataframes, one dataframe per label tier in the label file. Provide the label filename and type to return a tuple of tiers:
+
+```python
+from audiolabel import read_label
+[wddf, phdf, ctxtdf] = read_label('test/ipa.TextGrid', ftype='praat')
+```
+
+The `read_label` command reads all of the tiers ('word', 'phone', and 'context') found in the named label file in order and returns them as a tuple. The left hand side `[wddf, phdf, ctxtdf]` distributes each tier to separate variable names.
+
+Valid `ftype` values are 'praat' for Praat textgrids (also explicit short/long Praat types 'praat_short'/'praat_long'), 'eaf' (ELAN), 'esps' ([ESPS](https://github.com/rsprouse/espsfree)), 'wavesurfer' (Wavesurfer).
+
+You can use the `tiers` parameter to return specific tiers from label files:
+
+```python
+[wddf] = read_label('test/ipa.TextGrid', ftype='praat', tiers='word')   # by name
+[wddf, phdf] = read_label('test/ipa.TextGrid', ftype='praat', tiers=[0, 'phone'])   # by tier index and name
+```
+
+The `codec` parameter can be used if the encoding is not the default 'utf-8' or if `audiolabel` is unable to detect the encoding:
+
+```python
+[tier1, tier2] = read_label('test/utf8_no_BOM.TextGrid', ftype='praat', codec='utf-8')
+```
+
+Any of the [standard encodings](https://docs.python.org/3/library/codecs.html#standard-encodings) from the Python `codecs` module may be used.
+
+# Legacy overview
+
+NOTE: This section and following sections describe specialized functions for
+working with label files and are not recommended for new work. New projects
+should use the `read_label` function to create Pandas dataframes instead.
 
 `audiolabel` reads phonetic label files of various formats and parses them into three basic kinds of objects:
 
