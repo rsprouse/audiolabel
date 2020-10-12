@@ -19,7 +19,7 @@ python setup.py install
 
 # How to use
 
-The easiest way to get started is to launch the 'Using audiolabel' notebook on [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rsprouse/audiolabel/master?filepath=doc%2Fusing_audiolabel.ipynb) to learn how to read label files into dataframes. Or launch the 'Working with phonetic dataframes' notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rsprouse/audiolabel/master?filepath=doc%2Fworking_with_phonetic_dataframes.ipynb) for details on how to work with dataframes contain phonetic labels.
+The easiest way to get started is to launch the 'Using audiolabel' notebook on Binder [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rsprouse/audiolabel/master?filepath=doc%2Fusing_audiolabel.ipynb) to learn how to read label files into dataframes, or you can visit it at [nbviewer in read-only mode](https://nbviewer.jupyter.org/github/rsprouse/audiolabel/blob/master/doc/using_audiolabel.ipynb). For the next step launch the 'Working with phonetic dataframes' notebook [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/rsprouse/audiolabel/master?filepath=doc%2Fworking_with_phonetic_dataframes.ipynb) for details on how to work with dataframes contain phonetic labels, or see the [read-only view at nbviewer](https://nbviewer.jupyter.org/github/rsprouse/audiolabel/blob/master/doc/working_with_phonetic_dataframes.ipynb).
 
 The recommended way to use `audiolabel` is to import the `read_label` function and create Pandas dataframes, one dataframe per label tier in the label file. Provide the label filename and type to return a tuple of tiers:
 
