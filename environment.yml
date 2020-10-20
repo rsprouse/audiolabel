@@ -5,5 +5,3 @@ dependencies:
   - numpy
   - pandas
   - pip
-  - pip:
-    - git+https://github.com/rsprouse/audiolabel
