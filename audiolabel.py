@@ -157,6 +157,182 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
 
     return dfs
  
+def _df2praat_short_label_str(df, lblcol, t1col, t2col=None):
+    '''Return a string representing the labels of a tier in praat_short format from a dataframe.'''
+    ts = df[t1col].astype(str)
+    if t2col is not None:
+        ts = ts.str.cat(df[t2col].astype(str), sep='\n')
+    return '\n'.join(
+        ts.str.cat(
+            df[lblcol] \
+                .replace('"', '""', regex=False) \
+                .replace('^|$', '"', regex=True),
+            sep='\n'
+        )
+    )
+
+def _df2praat_long_label_str(df, lblcol, t1col, t2col=None):
+    '''Return a string representing the labels of a tier in praat_long format from a dataframe.'''
+    intvl = 'intervals [{}]:\n            '
+    ts = pd.Series(
+        [intvl.format(n) for n in np.arange(1, len(df)+1)]
+    )
+
+    t1lbl = '{} = "'.format('number' if t2col is None else 'xmin')
+    ts = ts.str.cat(
+        df[t1col].astype(str).replace('^', t1lbl, regex=True)
+    )
+    if t2col is not None:
+        ts = ts.str.cat(
+            df[t2col].astype(str).replace('^', 'xmax = ', regex=True),
+            sep='\n            '
+        )
+    lbl = '            {} = "'.format('mark' if t2col is None else 'text')
+    return '\n        '.join(
+        ts.str.cat(
+            df[lblcol] \
+                .replace('"', '""', regex=False) \
+                .replace('^', lbl, regex=True) \
+                .replace('$', '"', regex=True),
+            sep='\n'
+        )
+    )
+
+def _df2praat_short_tier(df, tname, lblcol, t1col, t2col=None):
+    '''Return a string representing the a tier defined in a dataframe in praat_short format.'''
+    return '\n'.join(
+        [
+            '"IntervalTier"' if t2col is not None else '"TextTier"',
+            '"' + tname + '"',
+            df[t1col].iloc[0].astype(str),
+            df[t1col].iloc[-1].astype(str),
+            str(len(df)),
+            _df2praat_short_label_str(df, lblcol, t1col, t2col)
+        ]
+)
+
+def _df2praat_long_tier(idx, df, tname, lblcol, t1col, t2col=None):
+    '''Return a string representing a tier defined in a dataframe in praat_long format.'''
+    tclass = '"IntervalTier"' if t2col is not None else '"TextTier"'
+    xmin = df[t1col].iloc[0].astype(str)
+    xmax = df[t1col].iloc[-1].astype(str)
+    tier = '''    item [{}]:
+        class = {}
+        name = "{}"
+        xmin = {}
+        xmax = {}
+        intervals: size = {}
+        {}'''.format(
+        idx, tclass, tname, xmin, xmax, str(len(df)),
+        _df2praat_long_label_str(df, lblcol, t1col, t2col)
+    )
+    return tier
+
+def _praat_short_preamble(start, end, tiercnt):
+    '''Preamble of a short Praat textgrid.'''
+    return '''
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+{}
+{}
+<exists>',
+{}'''.format(start, end, str(tiercnt))
+
+def _praat_long_preamble(start, end, tiercnt):
+    '''Preamble of a long Praat textgrid.'''
+    return '''
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = {}
+xmax = {}
+tiers? <exists>',
+size = {}
+item []:'''.format(start, end, str(tiercnt))
+
+def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
+    outfile=None):
+    '''Convert one or more dataframes to a Praat textgrid.
+
+Parameters
+----------
+
+dfs: dataframe of iterable of dataframes
+The input dataframe tiers.
+
+tnames: str or iterable of str
+The tier names to assign to each dataframe in `dfs`.
+
+lbl: None; str or iterable of str (None)
+The column name in each df that holds the label content. If None,
+inherit values from `tnames`. If a single value, use the same column
+name for each df.
+
+t1: str or iterable of str ('t1')
+The column name in each df that holds the t1 value. If a single value,
+use the same column name for each df.
+
+t2: str/None or iterable of str/None ('t2')
+The column name in each df that holds the t2 value. If a single value,
+use the same column name for each df. If None is given for any df, then
+a PointTier will be created for that df.
+
+ftype: 'praat_short' or 'praat_long' ('praat_short')
+The Praat TextGrid output type.
+
+outfile: file path
+If provided, write textgrid to outfile.
+
+Returns
+-------
+
+tg: str
+The textgrid output.
+'''
+    # Process params.
+    if lbl is None:
+        lblcols = tnames
+    else:
+        lblcols = [lbl] * len(dfs) if isinstance(lbl, str) else lbl
+    if len(lblcols) == 1 and len(dfs) > 1:
+        lblcols = lblcols * len(dfs)
+    t1cols = [t1] * len(dfs) if isinstance(t1, str) else t1
+    if len(t1cols) == 1 and len(dfs) > 1:
+        t1cols = t1cols * len(dfs)
+    t2cols = [t2] * len(dfs) if t2 is None or isinstance(t2, str) else t2
+    if len(t2cols) == 1 and len(dfs) > 1:
+        t2cols = t2cols * len(dfs)
+
+    # Find max/min times.
+    start = np.Inf
+    end = -np.Inf
+    for df, t1col, t2col in zip(dfs, t1cols, t2cols):
+        if df[t1col].iloc[0] < start:
+            start = df[t1col].iloc[0]
+        maxcol = t2col if t2col is not None else t1col
+        if df[maxcol].iloc[-1] > end:
+            end = df[maxcol].iloc[-1]
+
+    # Create TextGrid preamble.
+    if ftype != 'praat_long':
+        tg = _praat_short_preamble(start, end, len(dfs))
+    else:
+        tg = _praat_long_preamble(start, end, len(dfs))
+
+    # Add each tier.
+    ziplist = zip(dfs, tnames, lblcols, t1cols, t2cols)
+    if ftype != 'praat_long':
+        for _df, _tn, _lbl, _t1, _t2 in ziplist:
+            tg += '\n' + _df2praat_short_tier(_df, _tn, _lbl, _t1, _t2)
+    else:
+        for idx, (_df, _tn, _lbl, _t1, _t2) in enumerate(ziplist):
+            tg += '\n' + _df2praat_long_tier(idx+1, _df, _tn, _lbl, _t1, _t2)
+    if outfile is not None:
+        with open(outfile, 'w') as out:
+            out.write(tg)
+    return tg
+
 # Some convenience functions to be used in the classes.
 
 # Strip white space at edges, remove surrounding quotes, and unescape quotes.
