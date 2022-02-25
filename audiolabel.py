@@ -260,8 +260,7 @@ def _praat_short_preamble(xmin, xmax, tiercnt):
     Preamble of a short Praat textgrid.
     """
     # xmin and xmax should already be strings
-    return '''
-File type = "ooTextFile"
+    return '''File type = "ooTextFile"
 Object class = "TextGrid"
 
 {}
@@ -274,8 +273,7 @@ def _praat_long_preamble(xmin, xmax, tiercnt):
     Preamble of a long Praat textgrid.
     """
     # xmin and xmax should already be strings
-    return '''
-File type = "ooTextFile"
+    return '''File type = "ooTextFile"
 Object class = "TextGrid"
 
 xmin = {}
