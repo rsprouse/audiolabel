@@ -1187,8 +1187,8 @@ guessed."""
             t1_re = re.compile("(?:xmin|number) = ([^\s]+)")
             t2_re = re.compile("xmax = ([^\s]+)")
             text_re = re.compile("^\s*(?:text|mark) = (\".*)")
-            end_label_re = re.compile("^\s*(?:item|intervals|points) \[\d+\]:")
-            item_re = re.compile("^\s*item \[\d+\]:")
+            end_label_re = re.compile("^\s*(?:item|intervals|points)\s*\[\d+\]:?")
+            item_re = re.compile("^\s*item\s*\[\d+\]:?")
                 
             # Discard header lines.
             # TODO: use header lines for error checking or processing hints? Current
