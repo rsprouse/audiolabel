@@ -418,6 +418,16 @@ def test_read_label_list():
     assert(wddf.shape == (177, 4))
     assert(wddf.word[1] == 'IS')
 
+def test_read_label_from_eaf():
+    '''Some textgrids exported from ELAN appear to be valid (Praat can open
+them), even though they differ in some details from the long textgrids created
+by Praat. Make sure these can be read correctly.'''
+    [df] = audiolabel.read_label('test/from_eaf.long.TextGrid', 'praat')
+    assert((df.columns == ['t1', 't2', 'label', 'fname']).all())
+    assert(df.shape == (6, 4))
+    assert(df.label[0] == 'asdfasf')
+    assert(df.label[4] == 'text')
+
 if __name__ == '__main__':
     test_initialization()
     test_praat_long()
@@ -447,3 +457,4 @@ if __name__ == '__main__':
     test_read_label()
     test_read_label_tiers()
     test_read_label_list()
+    test_read_label_from_eaf()
