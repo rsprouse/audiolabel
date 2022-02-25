@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- vim: set fileencoding=utf-8 -*-
 
-import sys
+import os, sys
+from tempfile import NamedTemporaryFile
 import audiolabel
 import subprocess
 
@@ -428,6 +429,43 @@ by Praat. Make sure these can be read correctly.'''
     assert(df.label[0] == 'asdfasf')
     assert(df.label[4] == 'text')
 
+def _test_df2tg_praat(df2tgfmt):
+    '''Test output format for df2tg.'''
+    [wddf, phdf, stdf] = audiolabel.read_label(
+        'test/this_is_a_label_file.short.TextGrid', 'praat_short',
+        tiers=['word', 'phone', 'stimulus']
+    )
+    tg = audiolabel.df2tg(
+        [wddf, phdf, stdf],
+        ['word', 'phone', 'stimulus'],
+        t2=['t2', 't2', None],
+        ftype=df2tgfmt
+    )
+    temp = NamedTemporaryFile('w+', delete=False)
+    temp.write(tg)
+    temp.close()
+    try:
+        [wddf2, phdf2, stdf2] = audiolabel.read_label(
+            temp.name, df2tgfmt,
+            tiers=['word', 'phone', 'stimulus']
+        )
+    finally:
+        os.unlink(temp.name)
+    assert(wddf2.loc[1, 'word'] == 'This')
+    assert(wddf2.loc[4, 'word'] == 'label')
+    assert(phdf2.loc[2, 'phone'] == 'IH')
+    assert(phdf2.loc[5, 'phone'] == 'Z')
+    assert(stdf2.loc[0, 'stimulus'] == '1')
+    assert(stdf2.loc[2, 'stimulus'] == '3')
+
+def test_df2tg_praat_short():
+    '''Test praat_short output format for df2tg.'''
+    _test_df2tg_praat('praat_short')
+
+def test_df2tg_praat_long():
+    '''Test praat_long output format for df2tg.'''
+    _test_df2tg_praat('praat_long')
+
 if __name__ == '__main__':
     test_initialization()
     test_praat_long()
@@ -458,3 +496,5 @@ if __name__ == '__main__':
     test_read_label_tiers()
     test_read_label_list()
     test_read_label_from_eaf()
+    test_df2tg_praat_short()
+    test_df2tg_praat_long()
