@@ -3,7 +3,7 @@
 Created on Fri May 10 13:29:26 2013
 
 @author: Ronald L. Sprouse (ronald@berkeley.edu)
-@version: 0.5.1
+@version: 0.5.2
 """
 
 from __future__ import division
@@ -12,7 +12,11 @@ import os, sys
 import numpy as np
 import pandas as pd
 import codecs
-import collections
+try:
+    from collections.abc import MutableSet # Python >= 3.10
+except ImportError:
+    from collections import MutableSet     # Python < 3.10
+from collections import namedtuple
 import copy
 import re
 
@@ -561,7 +565,7 @@ a point in time, return the point."""
         return ctr
 
 
-class _LabelTier(collections.MutableSet):
+class _LabelTier(MutableSet):
     """A manager of (point) Label objects"""
     
     def __init__(self, start=0.0, end=float('inf'), name='', numlabels=None):
@@ -993,7 +997,7 @@ from the includes list."""
             label = self._list[idx]
         return label
 
-class LabelManager(collections.MutableSet):
+class LabelManager(MutableSet):
     """Manage one or more Tier objects."""
 
     def __init__(self, from_file=None, from_type=None, 
@@ -1226,7 +1230,7 @@ or the tier name."""
                 else:
                     seen.append(name)
 #            if not isinstance(labels, tuple):
-            Ret = collections.namedtuple('Ret', ' '.join(names))
+            Ret = namedtuple('Ret', ' '.join(names))
             labels = Ret(*labels)
         return labels
             
