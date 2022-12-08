@@ -5,6 +5,7 @@ import os, sys
 from tempfile import NamedTemporaryFile
 import audiolabel
 import subprocess
+from pathlib import Path
 
 def test_initialization():
     l1 = audiolabel.Label('first', 1.0, 2.0)
@@ -405,6 +406,20 @@ def test_read_label_tiers():
     assert(ctxtdf.shape == (3, 4))
     assert(ctxtdf.label[1] == 'sad')
 
+def test_read_label_pathlib():
+    '''Test read_label() function.'''
+    [phdf, wddf, ctxtdf] = audiolabel.read_label(
+        Path('test') / 'this_is_a_label_file.TextGrid', 'praat'
+    )
+    [wddf] = audiolabel.read_label(
+        [
+            Path('test') / 'this_is_a_label_file.TextGrid',
+            Path('test') / 'Turkmen_NA_20130919_G_3.TextGrid'
+        ],
+        'praat',
+        tiers=['word']
+    )
+
 def test_read_label_list():
     '''Test reading a list of files.'''
     [wddf] = audiolabel.read_label(
@@ -495,6 +510,7 @@ if __name__ == '__main__':
     test_read_label()
     test_read_label_tiers()
     test_read_label_list()
+    test_read_label_pathlib()
     test_read_label_from_eaf()
     test_df2tg_praat_short()
     test_df2tg_praat_long()

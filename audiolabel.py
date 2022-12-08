@@ -19,6 +19,7 @@ except ImportError:
 from collections import namedtuple
 import copy
 import re
+from pathlib import PosixPath
 
 def read_label(fname, ftype, codec=None, tiers=None, addcols=[], stop_on_error=True, ignore_index=True):
     '''Read one or more label files and extract specified tiers as a list of
@@ -77,13 +78,13 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
 '''
     # Coerce to list if fname is a string.
     try:
-        assert isinstance(fname, basestring) # Python 2
+        assert isinstance(fname, PosixPath) or isinstance(fname, basestring) # Python 2
         fname = [fname]
     except AssertionError:
         pass
     except NameError:
         try:
-            assert isinstance(fname, str) # Python 3
+            assert isinstance(fname, PosixPath) or isinstance(fname, str) # Python 3
             fname = [fname]
         except AssertionError:
             pass
