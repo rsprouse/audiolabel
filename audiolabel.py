@@ -1224,7 +1224,7 @@ or the tier name."""
         if '' not in names and None not in names:
             seen = []
             for name in self.names:
-                if re.compile('\s').search(name) or name in seen:
+                if re.compile(r'\s').search(name) or name in seen:
                     labels = tuple(labels)
                     break
                 else:
@@ -1304,10 +1304,10 @@ guessed."""
             xmin = f.readline()  # should be 'xmin = ' line
             if openargs['mode'] == 'rb':
                 xmin = xmin.decode(self.codec)
-            if re.match('xmin = \d', xmin):
+            if re.match(r'xmin = \d', xmin):
                 f.close()
                 self.read_praat_long(filename)
-            elif re.match('\d', xmin):
+            elif re.match(r'\d', xmin):
                 f.close()
                 self.read_praat_short(filename)
             else:
@@ -1317,7 +1317,7 @@ guessed."""
         # Regex that indicates end of a label for lines that include opening
         # double quote.
         labendre = re.compile(
-            '''
+            r'''
                 (?:^"|[^"])
                 (?:"")*      # Allow even number of preceding double quotes (Praat's way of including quotation marks in label content)
                 "            # Line terminates with double quote
@@ -1331,7 +1331,7 @@ guessed."""
         # Regex that indicates end of a label for lines that do not include
         # opening double quote, i.e. end of a multiline label text.
         mlabendre = re.compile(
-            '''
+            r'''
                 (?:^|[^"])
                 (?:"")*      # Allow even number of preceding double quotes (Praat's way of including quotation marks in label content)
                 "            # Line terminates with double quote
@@ -1442,19 +1442,19 @@ guessed."""
             assert(line != '')
             if mode == 'rb':
                 line = line.decode(self.codec)
-            m = re.compile("xmin = (-?[\d.]+)").search(line)
+            m = re.compile(r"xmin = (-?[\d.]+)").search(line)
             d['tstart'] = m.group(1)
             line = f.readline()
             assert(line != '')
             if mode == 'rb':
                 line = line.decode(self.codec)
-            m = re.compile("xmax = (-?[\d.]+)").search(line)
+            m = re.compile(r"xmax = (-?[\d.]+)").search(line)
             d['tend'] = m.group(1)
             line = f.readline()
             assert(line != '')
             if mode == 'rb':
                 line = line.decode(self.codec)
-            m = re.compile("(?:intervals|points): size = (\d+)").search(line)
+            m = re.compile(r"(?:intervals|points): size = (\d+)").search(line)
             d['numintvl'] = m.group(1)
         except AssertionError:
             pass
@@ -1475,11 +1475,11 @@ guessed."""
             firstline = f.readline()
             # Regexes to match line containing t1, t2, label text, and label end.
             # TODO: use named captures
-            t1_re = re.compile("(?:xmin|number) = ([^\s]+)")
-            t2_re = re.compile("xmax = ([^\s]+)")
-            text_re = re.compile("^\s*(?:text|mark) = (\".*)")
-            end_label_re = re.compile("^\s*(?:item|intervals|points)\s*\[\d+\]:?")
-            item_re = re.compile("^\s*item\s*\[\d+\]:?")
+            t1_re = re.compile(r"(?:xmin|number) = ([^\s]+)")
+            t2_re = re.compile(r"xmax = ([^\s]+)")
+            text_re = re.compile(r"^\s*(?:text|mark) = (\".*)")
+            end_label_re = re.compile(r"^\s*(?:item|intervals|points)\s*\[\d+\]:?")
+            item_re = re.compile(r"^\s*item\s*\[\d+\]:?")
                 
             # Discard header lines.
             # TODO: use header lines for error checking or processing hints? Current
@@ -1708,9 +1708,9 @@ guessed."""
 
         # Precompile regular expressions to identify the 'separator' header
         # line, end-of-header line, and empty/comment label lines.
-        separator = re.compile('separator\s+(.+)')
-        end_head = re.compile('^#')
-        empty_line = re.compile('^\s*(#.*)?$')
+        separator = re.compile(r'separator\s+(.+)')
+        end_head = re.compile(r'^#')
+        empty_line = re.compile(r'^\s*(#.*)?$')
         
         openargs = self._get_open_args(filename)
         with open(filename, **openargs) as f:
