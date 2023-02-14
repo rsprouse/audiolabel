@@ -288,7 +288,7 @@ size = {}
 item []:'''.format(xmin, xmax, str(tiercnt))
 
 def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
-    fmt=None, outfile=None):
+    fmt=None, start=None, end=None, outfile=None):
     """
     Convert one or more dataframes to a Praat textgrid.
 
@@ -342,6 +342,16 @@ def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
     The format string to apply to all `t1` and `t2` columns, as used by the
     `format <https://docs.python.org/3/library/stdtypes.html#str.format>`_
     built-in method.
+
+    start : num, optional
+    If provided, use `start` to specify the start time of the textgrid.
+    If not provided, the start time will be the `t1` value of the first
+    label.
+
+    end : num, optional
+    If provided, use `end` to specify the end time of the textgrid.
+    If not provided, the end time will be the `t2` value of the last
+    label.
 
     outfile : file path, optional
     If provided, write textgrid to outfile as a side effect. The textgrid
@@ -407,12 +417,18 @@ def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
         t2cols = t2cols * len(dfs)
 
     # Find max/min times.
-    xmin = min([df[col].min() for df, col in zip(dfs, t1cols)])
+    if start is not None:
+        xmin = start
+    else:
+        xmin = min([df[col].min() for df, col in zip(dfs, t1cols)])
     zippedtcols = zip(t1cols, t2cols)
     maxcols = [
         t1col if t2col is None else t2col for t1col, t2col in zippedtcols
     ]
-    xmax = max([df[col].max() for df, col in zip(dfs, maxcols)])
+    if end is not None:
+        xmax = end
+    else:
+        xmax = max([df[col].max() for df, col in zip(dfs, maxcols)])
 
     # Prep the `fmt` string, if needed.
     if fmt is not None and not fmt.startswith('{:'):
