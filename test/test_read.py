@@ -444,6 +444,13 @@ by Praat. Make sure these can be read correctly.'''
     assert(df.label[0] == 'asdfasf')
     assert(df.label[4] == 'text')
 
+def test_read_label_return_lm():
+    '''Test `return_lm` param of `read_label`.'''
+    ([df], lm) = audiolabel.read_label(
+        'test/from_eaf.long.TextGrid', 'praat', return_lm=True
+    )
+    assert(lm.names[0] == 'transcript')
+
 def _test_df2tg_praat(df2tgfmt):
     '''Test output format for df2tg.'''
     [wddf, phdf, stdf] = audiolabel.read_label(
@@ -512,5 +519,6 @@ if __name__ == '__main__':
     test_read_label_list()
     test_read_label_pathlib()
     test_read_label_from_eaf()
+    test_read_label_return_lm()
     test_df2tg_praat_short()
     test_df2tg_praat_long()

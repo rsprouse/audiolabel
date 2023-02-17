@@ -21,7 +21,8 @@ import copy
 import re
 from pathlib import PosixPath
 
-def read_label(fname, ftype, codec=None, tiers=None, addcols=[], stop_on_error=True, ignore_index=True):
+def read_label(fname, ftype, codec=None, tiers=None, addcols=[],
+    return_lm=False, stop_on_error=True, ignore_index=True):
     '''Read one or more label files and extract specified tiers as a list of
 dataframes, one dataframe per tier.
 
@@ -65,6 +66,9 @@ addcols = list of additional DataFrame columns names to process and include
   'fidx': the idx of the label file in fname
    [default []]
 
+return_lm = boolean; when True, return the LabelManager used to read the
+  label file in addition to the list of dataframes. [default False]
+
 stop_on_error = boolean; when True an error in processing an input file will 
   immediately reraise the error and no dataframes are returned; when False
   the error message is sent to STDERR and file processing continues, if
@@ -75,6 +79,13 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
   existing tier DataFrames. When True, each tier DataFrame will have
   an index with range (0:N). When False, the index resets to 0 at the
   first row for each label file. [default True]
+
+
+Returns:
+
+A list of dataframes, one dataframe per label tier. Or if `return_lm` is
+True, a tuple consisting of (the list of dataframes, the LabelManager)
+used to read the label file.
 '''
     # Coerce to list if fname is a string.
     try:
@@ -160,7 +171,10 @@ ignore_index = boolean; value is passed to pd.concat()'s ignore_index
         for c in list(catset & set(df.columns)): # intersection with catset
             df[c] = df[c].astype('category')
 
-    return dfs
+    if return_lm is True:
+        return (dfs, lm)
+    else:
+        return dfs
  
 def _df2praat_short_label_str(df, lblcol, t1col, t2col=None, fmt=None):
     """
