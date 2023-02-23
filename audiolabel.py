@@ -45,7 +45,7 @@ fname = list of label file filenames; for a single file this parameter can be
   provided as a string
 
 ftype = the label file type; must be one of 'praat', 'praat_short',
-  'praat_long', 'esps', 'wavesurfer'
+  'praat_long', 'eaf', 'esps', 'wavesurfer'
 
 Optional parameters:
 

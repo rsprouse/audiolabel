@@ -53,12 +53,17 @@ Any of the [standard encodings](https://docs.python.org/3/library/codecs.html#st
 Use `df2tg` to write one or more dataframes that represent annotations to a Praat textgrid:
 
 ```python
-from audiolabel import df2tg
+from audiolabel import read_label, df2tg
+[wddf, phdf] = read_label(
+    'test/ipa.TextGrid',
+    ftype='praat',
+    tiers=['word', 'phone']
+)
 df2tg(
     [phdf, wddf],          # List of annotation tier dataframes
     ['phone', 'word'],     # Names of column in each df containing label content
     fmt='0.4f',            # Format of time values, ex. 4-decimal float
-    ftype='praat_short',   # Short or long-style TextGrid
+    ftype='praat_short',   # 'praat_short' or 'praat_long'
     outfile='out.TextGrid' # Name of output file
 )
 ```
