@@ -301,8 +301,31 @@ tiers? <exists>
 size = {}
 item []:'''.format(xmin, xmax, str(tiercnt))
 
+def _df_degap(df, t1fld, t2fld, lblfld, start, end, fill):
+    start = float(start)
+    end = float(end)
+    if end > df[t2fld].astype(float).iloc[-1] and end != np.Inf:
+        endfill = end
+    else:
+        endfill = df[t2fld].astype(float).iloc[-1]
+    t1ser = df[t2fld].astype(float)
+    t2ser = df[t1fld].astype(float).shift(-1, fill_value=endfill)
+    if df[t1fld].iloc[0] > start:
+        t1ser = pd.concat([pd.Series(start), t1ser])
+        t2ser = pd.concat([pd.Series(df[t1fld].iloc[0]), t2ser])
+    gapdf = pd.concat({
+        t1fld : t1ser,
+        t2fld : t2ser
+    }, axis='columns')
+    gapdf[lblfld] = fill
+    gapdf = gapdf[gapdf[t1fld] != gapdf[t2fld]]
+    return pd.concat(
+        [df, gapdf],
+        axis='rows'
+    ).sort_values(t1fld).reset_index(drop=True)
+
 def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
-    fmt=None, start=None, end=None, outfile=None):
+    codec='utf-8', fmt=None, start=None, end=None, fill_gaps='', outfile=None):
     """
     Convert one or more dataframes to a Praat textgrid.
 
@@ -352,10 +375,14 @@ def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
     The Praat textgrid output type. Must be one of 'praat_short' or
     'praat_long'.
 
+    codec : str
+    The codec used to write the textgrid (e.g. 'utf-8', 'ascii').
+    [default 'utf-8']
+
     fmt : str, optional
     The format string to apply to all `t1` and `t2` columns, as used by the
     `format <https://docs.python.org/3/library/stdtypes.html#str.format>`_
-    built-in method.
+    built-in method, for example, '0.4f' for four-digit floating point.
 
     start : num, optional
     If provided, use `start` to specify the start time of the textgrid.
@@ -366,6 +393,13 @@ def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
     If provided, use `end` to specify the end time of the textgrid.
     If not provided, the end time will be the `t2` value of the last
     label.
+
+    fill_gaps = str or None
+    When `fill_gaps` is not None, new labels will be inserted into IntervalTier
+    outputs where consecutive dataframe rows are not contiguous in time (rows
+    in which `t2` of one row is less than `t1` of the next row). The string
+    value of `fill_gaps` is used as the text content of the inserted labels.
+    [default '' empty string]
 
     outfile : file path, optional
     If provided, write textgrid to outfile as a side effect. The textgrid
@@ -444,6 +478,19 @@ def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
     else:
         xmax = max([df[col].max() for df, col in zip(dfs, maxcols)])
 
+    if fill_gaps is not None:
+        for idx, (t2, lblcol) in enumerate(zip(t2cols, lblcols)):
+            if t2 is not None:
+                dfs[idx] = _df_degap(
+                    dfs[idx],
+                    t1fld=t1,
+                    t2fld=t2,
+                    lblfld=lblcol,
+                    start=xmin,
+                    end=xmax,
+                    fill=fill_gaps
+                )
+
     # Prep the `fmt` string, if needed.
     if fmt is not None and not fmt.startswith('{:'):
         fmt = '{:' + fmt + '}'
@@ -475,7 +522,7 @@ def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
                     idx+1, _df, xmin, xmax, _tn, _lbl, _t1, _t2, fmt
                 )
     if outfile is not None:
-        with open(outfile, 'w') as out:
+        with open(outfile, 'w', encoding=codec) as out:
             out.write(tg)
     return tg
 

@@ -35,8 +35,11 @@ Valid `ftype` values are 'praat' for Praat textgrids (also explicit short/long P
 You can use the `tiers` parameter to return specific tiers from label files:
 
 ```python
-[wddf] = read_label('test/ipa.TextGrid', ftype='praat', tiers='word')   # by name
-[wddf, phdf] = read_label('test/ipa.TextGrid', ftype='praat', tiers=[0, 'phone'])   # by tier index and name
+# Specify tiers by name
+[wddf] = read_label('test/ipa.TextGrid', ftype='praat', tiers='word')
+
+# Specify tiers by tier index and name.
+[wddf, phdf] = read_label('test/ipa.TextGrid', ftype='praat', tiers=[0, 'phone'])
 ```
 
 The `codec` parameter can be used if the encoding is not the default 'utf-8' or if `audiolabel` is unable to detect the encoding:
@@ -46,6 +49,19 @@ The `codec` parameter can be used if the encoding is not the default 'utf-8' or 
 ```
 
 Any of the [standard encodings](https://docs.python.org/3/library/codecs.html#standard-encodings) from the Python `codecs` module may be used.
+
+Use `df2tg` to write one or more dataframes that represent annotations to a Praat textgrid:
+
+```python
+df2tg(
+    [phdf, wddf],          # List of annotation tier dataframes
+    ['phone', 'word'],     # Names of column in each df containing label content
+    fmt='0.4f',            # Format of time values, ex. 4-decimal float
+    ftype='praat_short',   # Short or long-style TextGrid
+    outfile='out.TextGrid' # Name of output file
+)
+```
+
 
 # Legacy overview
 

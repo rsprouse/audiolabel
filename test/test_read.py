@@ -488,6 +488,153 @@ def test_df2tg_praat_long():
     '''Test praat_long output format for df2tg.'''
     _test_df2tg_praat('praat_long')
 
+def test_df2tg_df_degap():
+    '''Test _df_degap function for use with df2tg.'''
+    [phdf] = audiolabel.read_label(
+        'test/this_is_a_label_file.TextGrid', tiers='phone', ftype='praat'
+    )
+    output = audiolabel.df2tg(
+        phdf[phdf['phone'].isin(['AH0', 'EY1', 'L'])],
+        'phone',
+        start=0.0,
+        end=1.8,
+        fmt='0.4f',
+        ftype='praat_short'
+    )
+    assert(output.strip() == '''
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+0.0000
+1.8000
+<exists>
+1
+"IntervalTier"
+"phone"
+0.0000
+1.8000
+10
+0.0000
+0.6111
+""
+0.6111
+0.6610
+"AH0"
+0.6610
+0.8007
+"L"
+0.8007
+0.9703
+"EY1"
+0.9703
+1.0002
+""
+1.0002
+1.0302
+"AH0"
+1.0302
+1.1399
+"L"
+1.1399
+1.4891
+""
+1.4891
+1.6288
+"L"
+1.6288
+1.8000
+""
+'''.strip())
+    output = audiolabel.df2tg(
+        phdf[phdf['phone'].isin(['AH0', 'EY1', 'L'])],
+        'phone',
+        fmt='0.4f',
+        ftype='praat_short'
+    )
+    assert(output.strip() == '''
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+0.6111
+1.6288
+<exists>
+1
+"IntervalTier"
+"phone"
+0.6111
+1.6288
+8
+0.6111
+0.6610
+"AH0"
+0.6610
+0.8007
+"L"
+0.8007
+0.9703
+"EY1"
+0.9703
+1.0002
+""
+1.0002
+1.0302
+"AH0"
+1.0302
+1.1399
+"L"
+1.1399
+1.4891
+""
+1.4891
+1.6288
+"L"
+'''.strip())
+    output = audiolabel.df2tg(
+        phdf[phdf['phone'].isin(['AH0', 'EY1', 'L'])],
+        'phone',
+        fmt='0.4f',
+        fill_gaps='<sil>',
+        ftype='praat_short'
+    )
+    assert(output.strip() == '''
+File type = "ooTextFile"
+Object class = "TextGrid"
+
+0.6111
+1.6288
+<exists>
+1
+"IntervalTier"
+"phone"
+0.6111
+1.6288
+8
+0.6111
+0.6610
+"AH0"
+0.6610
+0.8007
+"L"
+0.8007
+0.9703
+"EY1"
+0.9703
+1.0002
+"<sil>"
+1.0002
+1.0302
+"AH0"
+1.0302
+1.1399
+"L"
+1.1399
+1.4891
+"<sil>"
+1.4891
+1.6288
+"L"
+'''.strip())
+
 if __name__ == '__main__':
     test_initialization()
     test_praat_long()
@@ -522,3 +669,4 @@ if __name__ == '__main__':
     test_read_label_return_lm()
     test_df2tg_praat_short()
     test_df2tg_praat_long()
+    test_df2tg_df_degap()
