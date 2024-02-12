@@ -478,18 +478,43 @@ def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
     else:
         xmax = max([df[col].max() for df, col in zip(dfs, maxcols)])
 
-    if fill_gaps is not None:
-        for idx, (t2, lblcol) in enumerate(zip(t2cols, lblcols)):
+    for idx, (t1, t2, lblcol) in enumerate(zip(t1cols, t2cols, lblcols)):
+        try:
+            if len(t1) > 1:
+                assert((dfs[idx][t1].diff()[1:] > 0).all())
+                if t2 is not None:
+                    assert((dfs[idx][t2].diff()[1:] > 0).all())
+        except AssertionError:
+            raise RuntimeError(
+                'Dataframe labels not sorted by time or duplicate times found.'
+            ) from None
+        try:
             if t2 is not None:
-                dfs[idx] = _df_degap(
-                    dfs[idx],
-                    t1fld=t1,
-                    t2fld=t2,
-                    lblfld=lblcol,
-                    start=xmin,
-                    end=xmax,
-                    fill=fill_gaps
+                assert(((dfs[idx][t2] > dfs[idx][t1])).all())
+        except AssertionError:
+            raise RuntimeError(
+                'Interval label t2 values must be greater than t1.'
+            ) from None
+        try:
+            # Every t1 must be >= the preceding t2.
+            if t2 is not None:
+                assert(
+                    (dfs[idx][t1].shift(-1) >= dfs[idx][t2]).iloc[:-1].all()
                 )
+        except AssertionError:
+            raise RuntimeError(
+                'Dataframe interval labels cannot overlap in time.'
+            ) from None
+        if fill_gaps is not None and t2 is not None:
+            dfs[idx] = _df_degap(
+                dfs[idx],
+                t1fld=t1,
+                t2fld=t2,
+                lblfld=lblcol,
+                start=xmin,
+                end=xmax,
+                fill=fill_gaps
+            )
 
     # Prep the `fmt` string, if needed.
     if fmt is not None and not fmt.startswith('{:'):
