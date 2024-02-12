@@ -1,0 +1,98 @@
+﻿File type = "ooTextFile"
+Object class = "TextGrid"
+
+xmin = 0 
+xmax = 1.6550793650793652 
+tiers? <exists> 
+size = 3 
+item []: 
+    item [1]:
+        class = "IntervalTier" 
+        name = "word" 
+        xmin = 0 
+        xmax = 1.6550793650793652 
+        intervals: size = 6 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.04531977534891905 
+            text = "" 
+        intervals [2]:
+            xmin = 0.04531977534891905 
+            xmax = 0.4207853308004855 
+            text = "This" 
+        intervals [3]:
+            xmin = 0.4207853308004855 
+            xmax = 0.5735910801121695 
+            text = "is" 
+        intervals [4]:
+            xmin = 0.5735910801121695 
+            xmax = 0.6696404082509424 
+            text = "a" 
+        intervals [5]:
+            xmin = 0.6696404082509424 
+            xmax = 1.1178706062318822 
+            text = "label" 
+        intervals [6]:
+            xmin = 1.1178706062318822 
+            xmax = 1.6550793650793652 
+            text = "file " 
+    item [2]:
+        class = "IntervalTier" 
+        name = "" 
+        xmin = 0 
+        xmax = 1.6550793650793652 
+        intervals: size = 8 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.04531977534891905 
+            text = "ɗ" 
+        intervals [2]:
+            xmin = 0.04531977534891905 
+            xmax = 0.1850278890053159 
+            text = "ɚ" 
+        intervals [3]:
+            xmin = 0.1850278890053159 
+            xmax = 0.3058171956040756 
+            text = "ʧ" 
+        intervals [4]:
+            xmin = 0.3058171956040756 
+            xmax = 0.4207853308004855 
+            text = "ʍ" 
+        intervals [5]:
+            xmin = 0.4207853308004855 
+            xmax = 0.5182899517898458 
+            text = "ʊ" 
+        intervals [6]:
+            xmin = 0.5182899517898458 
+            xmax = 0.5735910801121695 
+            text = "œ" 
+        intervals [7]:
+            xmin = 0.5735910801121695 
+            xmax = 0.6696404082509424 
+            text = "ɯ" 
+        intervals [8]:
+            xmin = 0.6696404082509424 
+            xmax = 1.6550793650793652 
+            text = "ʤ" 
+        intervals [9]:
+            xmin = 1.6550793650793652 
+            xmax = 2.6550793650793652 
+            text = "E" 
+    item [3]:
+        class = "IntervalTier" 
+        name = "" 
+        xmin = 0 
+        xmax = 1.6550793650793652 
+        intervals: size = 3 
+        intervals [1]:
+            xmin = 0 
+            xmax = 0.04531977534891905 
+            text = "" 
+        intervals [2]:
+            xmin = 0.04531977534891905 
+            xmax = 0.4207853308004855 
+            text = "1" 
+        intervals [3]:
+            xmin = 0.4207853308004855 
+            xmax = 1.6550793650793652 
+            text = "2" 
