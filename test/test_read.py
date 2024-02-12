@@ -451,6 +451,13 @@ def test_read_label_return_lm():
     )
     assert(lm.names[0] == 'transcript')
 
+def test_read_label_empty_name():
+    '''Test read of read_label() with empty tier names.'''
+    ([phdf, wddf, ctxtdf], lm) = audiolabel.read_label(
+        'test/empty_name.TextGrid', 'praat', return_lm=True
+    )
+    assert(lm.names == ('word', '', ''))
+
 def _test_df2tg_praat(df2tgfmt):
     '''Test output format for df2tg.'''
     [wddf, phdf, stdf] = audiolabel.read_label(
@@ -667,6 +674,7 @@ if __name__ == '__main__':
     test_read_label_pathlib()
     test_read_label_from_eaf()
     test_read_label_return_lm()
+    test_read_label_empty_name()
     test_df2tg_praat_short()
     test_df2tg_praat_long()
     test_df2tg_df_degap()

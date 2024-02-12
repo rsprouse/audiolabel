@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
   name = 'audiolabel',
-  version='0.3.2',
+  version='0.3.3',
   py_modules = ['audiolabel'],
   scripts = ['audiolabel_update_api'],
   classifiers = [

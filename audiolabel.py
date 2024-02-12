@@ -1539,7 +1539,7 @@ guessed."""
             assert(line != '')
             if mode == 'rb':
                 line = line.decode(self.codec)
-            m = re.compile("name = \"(.+)\"").search(line)
+            m = re.compile("name = \"(.*)\"").search(line)
             d['tname'] = m.group(1)
             line = f.readline()
             assert(line != '')
