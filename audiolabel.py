@@ -19,7 +19,7 @@ except ImportError:
 from collections import namedtuple
 import copy
 import re
-from pathlib import PosixPath
+from pathlib import Path
 
 def read_label(fname, ftype, codec=None, tiers=None, addcols=[],
     return_lm=False, stop_on_error=True, ignore_index=True):
@@ -89,13 +89,13 @@ used to read the label file.
 '''
     # Coerce to list if fname is a string.
     try:
-        assert isinstance(fname, PosixPath) or isinstance(fname, basestring) # Python 2
+        assert isinstance(fname, Path) or isinstance(fname, basestring) # Python 2
         fname = [fname]
     except AssertionError:
         pass
     except NameError:
         try:
-            assert isinstance(fname, PosixPath) or isinstance(fname, str) # Python 3
+            assert isinstance(fname, Path) or isinstance(fname, str) # Python 3
             fname = [fname]
         except AssertionError:
             pass
