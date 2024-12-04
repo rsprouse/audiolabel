@@ -304,7 +304,7 @@ item []:'''.format(xmin, xmax, str(tiercnt))
 def _df_degap(df, t1fld, t2fld, lblfld, start, end, fill):
     start = float(start)
     end = float(end)
-    if end > df[t2fld].astype(float).iloc[-1] and end != np.Inf:
+    if end > df[t2fld].astype(float).iloc[-1] and end != np.inf:
         endfill = end
     else:
         endfill = df[t2fld].astype(float).iloc[-1]
@@ -937,7 +937,7 @@ Please use as_string() instead.
     def add(self, label):
         """Add an annotation object."""
         super(PointTier, self).add(label)
-        if self.end == np.Inf or label.t1 > self.end:
+        if self.end == np.inf or label.t1 > self.end:
             self.end = label.t1
             
     # TODO: add discard() and adjust self.end?
@@ -1048,7 +1048,7 @@ from the includes list."""
     def add(self, label):
         """Add an annotation object."""
         super(IntervalTier, self).add(label)
-        if self.end == np.Inf or label.t2 > self.end:
+        if self.end == np.inf or label.t2 > self.end:
             self.end = label.t2
             
     # TODO: add discard() and adjust self.end?
