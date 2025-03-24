@@ -642,15 +642,16 @@ Object class = "TextGrid"
 "L"
 '''.strip())
 
-def test_df2tg_iterator():
-    '''Test that df2tg allows iterator of dataframes input.'''
-    dfs = audiolabel.read_label(
+def test_df2tg_subscripts():
+    '''Test that df2tg allows non-subscriptable iterable of dataframes input.'''
+    [wddf, phdf, stdf] = audiolabel.read_label(
         'test/this_is_a_label_file.short.TextGrid', 'praat_short',
         tiers=['word', 'phone', 'stimulus']
     )
+    tierdict = {'word': wddf, 'phone': phdf, 'stimulus': stdf}
     tg = audiolabel.df2tg(
-        iter(dfs),
-        iter(['word', 'phone', 'stimulus']),
+        tierdict.values(),
+        tierdict.keys(),
         lbl=iter(['word', 'phone', 'stimulus']),
         t1=iter(['t1', 't1', 't1']),
         t2=iter(['t2', 't2', None]),
@@ -693,4 +694,4 @@ if __name__ == '__main__':
     test_df2tg_praat_short()
     test_df2tg_praat_long()
     test_df2tg_df_degap()
-    test_df2tg_iterator()
+    test_df2tg_subscripts()

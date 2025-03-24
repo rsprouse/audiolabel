@@ -13,9 +13,9 @@ import numpy as np
 import pandas as pd
 import codecs
 try:
-    from collections.abc import MutableSet, Iterator # Python >= 3.10
+    from collections.abc import MutableSet # Python >= 3.10
 except ImportError:
-    from collections import MutableSet, Iterator     # Python < 3.10
+    from collections import MutableSet     # Python < 3.10
 from collections import namedtuple
 import copy
 import re
@@ -447,30 +447,30 @@ def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
     """
 
     # Process params.
-    # Coerce Iterators to list.
+    # Coerce Iterables to list to ensure they are subscriptable and have length.
     if isinstance(dfs, pd.DataFrame):
         dfs = [dfs]
-    elif isinstance(dfs, Iterator):
+    elif not hasattr(dfs, '__getitem__'):
         dfs = list(dfs)
     if isinstance(tnames, str):
         tnames = [tnames]
-    elif isinstance(tnames, Iterator):
+    elif not hasattr(tnames, '__getitem__'):
         tnames = list(tnames)
     if lbl is None:
         lblcols = tnames
     else:
         lblcols = [lbl] * len(dfs) if isinstance(lbl, str) else lbl
-    if isinstance(lblcols, Iterator):
+    if not hasattr(lblcols, '__getitem__'):
         lblcols = list(lblcols)
     if len(lblcols) == 1 and len(dfs) > 1:
         lblcols = lblcols * len(dfs)
     t1cols = [t1] * len(dfs) if isinstance(t1, str) else t1
-    if isinstance(t1cols, Iterator):
+    if not hasattr(t1cols, '__getitem__'):
         t1cols = list(t1cols)
     if len(t1cols) == 1 and len(dfs) > 1:
         t1cols = t1cols * len(dfs)
     t2cols = [t2] * len(dfs) if t2 is None or isinstance(t2, str) else t2
-    if isinstance(t2cols, Iterator):
+    if not hasattr(t2cols, '__getitem__'):
         t2cols = list(t2cols)
     if len(t2cols) == 1 and len(dfs) > 1:
         t2cols = t2cols * len(dfs)
