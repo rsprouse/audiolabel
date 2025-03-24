@@ -492,9 +492,9 @@ def df2tg(dfs, tnames, lbl=None, t1='t1', t2='t2', ftype='praat_short',
     for idx, (t1, t2, lblcol) in enumerate(zip(t1cols, t2cols, lblcols)):
         try:
             if len(t1) > 1:
-                assert((dfs[idx][t1].diff()[1:] > 0).all())
+                assert((dfs[idx][t1].diff().iloc[1:] > 0).all())
                 if t2 is not None:
-                    assert((dfs[idx][t2].diff()[1:] > 0).all())
+                    assert((dfs[idx][t2].diff().iloc[1:] > 0).all())
         except AssertionError:
             raise RuntimeError(
                 'Dataframe labels not sorted by time or duplicate times found.'
