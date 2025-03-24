@@ -642,6 +642,21 @@ Object class = "TextGrid"
 "L"
 '''.strip())
 
+def test_df2tg_iterator():
+    '''Test that df2tg allows iterator of dataframes input.'''
+    dfs = audiolabel.read_label(
+        'test/this_is_a_label_file.short.TextGrid', 'praat_short',
+        tiers=['word', 'phone', 'stimulus']
+    )
+    tg = audiolabel.df2tg(
+        iter(dfs),
+        iter(['word', 'phone', 'stimulus']),
+        lbl=iter(['word', 'phone', 'stimulus']),
+        t1=iter(['t1', 't1', 't1']),
+        t2=iter(['t2', 't2', None]),
+        ftype='praat_short'
+    )
+
 if __name__ == '__main__':
     test_initialization()
     test_praat_long()
@@ -678,3 +693,4 @@ if __name__ == '__main__':
     test_df2tg_praat_short()
     test_df2tg_praat_long()
     test_df2tg_df_degap()
+    test_df2tg_iterator()
