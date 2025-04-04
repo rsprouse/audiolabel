@@ -192,9 +192,12 @@ def _df2praat_short_label_str(df, lblcol, t1col, t2col=None, fmt=None):
         ts = ts.str.cat(df[t2col].map(fmt.format), sep='\n')
     return '\n'.join(
         ts.str.cat(
-            df[lblcol] \
-                .replace('"', '""', regex=False) \
+            df[lblcol].fillna('').astype(str) \
+                .str.replace('"', '""', regex=False) \
                 # ^|$ alone does not match twice on empty strings
+                # Also, .str.replace doesn't seem to work with
+                # beginning/end of string unless you capture, e.g. (^)
+                # and we just use .replace instead.
                 .replace('^', '"', regex=True) \
                 .replace('$', '"', regex=True),
             sep='\n'
@@ -228,8 +231,12 @@ def _df2praat_long_label_str(df, lblcol, t1col, t2col=None, fmt=None):
     lbl = '            {} = "'.format('mark' if t2col is None else 'text')
     return '\n        '.join(
         ts.str.cat(
-            df[lblcol] \
-                .replace('"', '""', regex=False) \
+            df[lblcol].fillna('').astype(str) \
+                .str.replace('"', '""', regex=False) \
+                # ^|$ alone does not match twice on empty strings
+                # Also, .str.replace doesn't seem to work with
+                # beginning/end of string unless you capture, e.g. (^)
+                # and we just use .replace instead.
                 .replace('^', lbl, regex=True) \
                 .replace('$', '"', regex=True),
             sep='\n'

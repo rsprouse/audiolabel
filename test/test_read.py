@@ -6,6 +6,7 @@ from tempfile import NamedTemporaryFile
 import audiolabel
 import subprocess
 from pathlib import Path
+import pandas as pd
 
 def test_initialization():
     l1 = audiolabel.Label('first', 1.0, 2.0)
@@ -458,12 +459,13 @@ def test_read_label_empty_name():
     )
     assert(lm.names == ('word', '', ''))
 
-def _test_df2tg_praat(df2tgfmt):
+def _test_df2tg_praat(df2tgfmt, wddf=None, phdf=None, stdf=None):
     '''Test output format for df2tg.'''
-    [wddf, phdf, stdf] = audiolabel.read_label(
-        'test/this_is_a_label_file.short.TextGrid', 'praat_short',
-        tiers=['word', 'phone', 'stimulus']
-    )
+    if wddf is None:
+        [wddf, phdf, stdf] = audiolabel.read_label(
+            'test/this_is_a_label_file.short.TextGrid', 'praat_short',
+            tiers=['word', 'phone', 'stimulus']
+        )
     tg = audiolabel.df2tg(
         [wddf, phdf, stdf],
         ['word', 'phone', 'stimulus'],
@@ -480,6 +482,7 @@ def _test_df2tg_praat(df2tgfmt):
         )
     finally:
         os.unlink(temp.name)
+    assert(wddf2.loc[0, 'word'] == '')
     assert(wddf2.loc[1, 'word'] == 'This')
     assert(wddf2.loc[4, 'word'] == 'label')
     assert(phdf2.loc[2, 'phone'] == 'IH')
@@ -494,6 +497,17 @@ def test_df2tg_praat_short():
 def test_df2tg_praat_long():
     '''Test praat_long output format for df2tg.'''
     _test_df2tg_praat('praat_long')
+
+def test_df2tg_from_csv():
+    '''Test df2tg with csv inputs containing NaN and numeric label content.'''
+    wddf = pd.read_csv('test/this_is_a_label_file.wddf.csv')
+    assert(wddf['word'].isna().iloc[0])
+    phdf = pd.read_csv('test/this_is_a_label_file.phdf.csv')
+    stdf = pd.read_csv(
+        'test/this_is_a_label_file.stdf.csv',
+        dtype={'stimulus': int}
+    )
+    _test_df2tg_praat('praat_short', wddf, phdf, stdf)
 
 def test_df2tg_df_degap():
     '''Test _df_degap function for use with df2tg.'''
@@ -693,5 +707,6 @@ if __name__ == '__main__':
     test_read_label_empty_name()
     test_df2tg_praat_short()
     test_df2tg_praat_long()
+    test_df2tg_from_csv()
     test_df2tg_df_degap()
     test_df2tg_subscripts()
