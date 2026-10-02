@@ -1,10 +1,12 @@
-# audiolabel
+# audiolabel (deprecated, unmaintained)
 
-Python library for reading and writing label files for phonetic analysis (Praat, ELAN, ESPS, Wavesurfer).
+**This repository is no longer maintained. Instead, please see [phonetics-projects](https://github.com/phonetics-projects).**
 
-# Installing
+UC Berkeley PhonLab utilities. The `tg_to_df()` ane `df_to_tg()` functions read and write Praat textgrids. 
 
-`audiolabel` can be installed with `pip`:
+# Legacy Installation
+
+If you wish to install this legacy repository (not recommended), do:
 
 ```bash
 pip install git+https://github.com/rsprouse/audiolabel
